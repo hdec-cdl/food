@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>H-슐랭 | 현대건설 임직원 전국 맛집 지도</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  
+  <!-- Leaflet Map CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- SheetJS Library (Excel Reader) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Pretendard', 'Inter', 'sans-serif'],
+          },
+          colors: {
+            hdec: {
+              green: '#008542',
+              greenDark: '#006633',
+              greenLight: '#E8F5E9',
+              navy: '#002B49',
+              navyDark: '#001A2C',
+              accent: '#F39200',
+              grayBg: '#F8FAFC',
+              cardBg: '#FFFFFF',
+              border: '#E2E8F0',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F1F5F9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
+    
+    /* Leaflet marker customization */
+    .custom-marker-pin {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #008542;
+      color: #FFFFFF;
+      box-shadow: 0 4px 12px rgba(0, 43, 73, 0.35);
+      border: 2.5px solid #FFFFFF;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+      cursor: pointer;
+    }
+    .custom-marker-pin:hover, .custom-marker-pin.active {
+      transform: scale(1.22) translateY(-4px);
+      background: #002B49;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+      border-color: #F39200;
+      z-index: 1000 !important;
+    }
+    
+    /* Animation */
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.96) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .animate-modal {
+      animation: modalFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+<body class="bg-hdec-grayBg text-slate-800 font-sans antialiased overflow-hidden h-screen flex flex-col">
+
+  <!-- Top Navigation Header -->
+  <header class="bg-hdec-navy text-white px-4 md:px-6 py-3 shrink-0 flex items-center justify-between shadow-md z-30">
+    <div class="flex items-center space-x-3 cursor-pointer" onclick="resetAllFilters()">
+      <div class="w-9 h-9 rounded-xl bg-hdec-green flex items-center justify-center text-white shadow-inner font-black text-lg">
+        H
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="font-extrabold text-lg md:text-xl tracking-tight text-white">H-슐랭</span>
+          <span class="text-[11px] font-semibold bg-hdec-green px-2 py-0.5 rounded-full text-white tracking-wide">현대건설 맛있을지도</span>
+        </div>
+        <p class="text-xs text-slate-300 hidden sm:block">전국 현장과 본사 임직원이 직접 발로 뛰어 검증한 진짜 맛집</p>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center space-x-2 sm:space-x-3">
+      <!-- Excel File Reader Button -->
+      <label class="cursor-pointer flex items-center space-x-1.5 bg-slate-700/80 hover:bg-slate-600 text-white text-xs font-semibold px-3 py-2 rounded-lg border border-slate-500/50 shadow-sm transition">
+        <i class="ph ph-file-xls text-emerald-400 text-base"></i>
+        <span class="hidden md:inline">엑셀(.xlsx) 파일 열기</span>
+        <span class="md:hidden">엑셀 로드</span>
+        <input type="file" id="excel-file-input" accept=".xlsx, .xls" class="hidden" onchange="handleExcelUpload(event)">
+      </label>
+
+      <!-- Reset Filter Button -->
+      <button onclick="resetAllFilters()" title="필터 초기화" class="p-2 rounded-lg bg-slate-700/80 hover:bg-slate-600 text-slate-200 transition">
+        <i class="ph ph-arrows-counter-clockwise text-base"></i>
+      </button>
+
+      <!-- View Toggle for Mobile -->
+      <div class="md:hidden flex bg-slate-800 rounded-lg p-0.5 border border-slate-700">
+        <button id="btn-show-list" onclick="setMobileView('list')" class="px-2.5 py-1 text-xs font-bold rounded-md bg-hdec-green text-white">목록</button>
+        <button id="btn-show-map" onclick="setMobileView('map')" class="px-2.5 py-1 text-xs font-bold rounded-md text-slate-300">지도</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main App Body: Sidebar List + Interactive Map -->
+  <main class="flex-1 flex overflow-hidden relative">
+    
+    <!-- Left Panel: Search, Filter & Restaurant Cards -->
+    <section id="sidebar-panel" class="w-full md:w-[440px] lg:w-[480px] bg-white border-r border-hdec-border flex flex-col shrink-0 z-10 transition-transform duration-300">
+      
+      <!-- Search & Filters Container -->
+      <div class="p-3.5 md:p-4 border-b border-hdec-border space-y-3 bg-slate-50/70">
+        
+        <!-- Search Bar -->
+        <div class="relative">
+          <i class="ph ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-lg"></i>
+          <input 
+            type="text" 
+            id="search-input" 
+            oninput="handleSearch(this.value)"
+            placeholder="식당명, 대표메뉴, 주소, 추천내용 검색..." 
+            class="w-full pl-10 pr-9 py-2.5 text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-hdec-green focus:border-transparent shadow-sm"
+          >
+          <button id="search-clear-btn" onclick="clearSearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+            <i class="ph ph-x-circle-fill text-lg"></i>
+          </button>
+        </div>
+
+        <!-- Region & Category Dropdown Selectors -->
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-500 mb-1">권역별 선택</label>
+            <select id="region-select" onchange="filterByRegion(this.value)" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-2 font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-hdec-green">
+              <option value="all">전국 전체 (전체보기)</option>
+              <option value="서울">서울 (본사/계동/마곡 등)</option>
+              <option value="경기">경기·인천</option>
+              <option value="충청">충청·대전·세종</option>
+              <option value="강원">강원권</option>
+              <option value="경상">경상·대구·부산·울산</option>
+              <option value="전라">전라·광주</option>
+              <option value="제주">제주도</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-500 mb-1">음식 종류</label>
+            <select id="category-select" onchange="filterByCategory(this.value)" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-2 font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-hdec-green">
+              <option value="all">음식 전체</option>
+              <option value="한식">한식 / 백반 / 탕</option>
+              <option value="고기·구이">고기구이 / 회식</option>
+              <option value="해산물">해산물 / 횟집</option>
+              <option value="면류·분식">면류 / 분식</option>
+              <option value="중식·일식·양식">중식 / 일식 / 양식</option>
+              <option value="카페·디저트">카페 / 디저트</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Quick Theme Chips -->
+        <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
+          <button onclick="filterByTag('all')" class="theme-tag-btn px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap bg-hdec-navy text-white transition shadow-xs" data-tag="all">전체</button>
+          <button onclick="filterByTag('든든한_현장점심')" class="theme-tag-btn px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 transition shadow-xs" data-tag="든든한_현장점심">#든든한_현장점심</button>
+          <button onclick="filterByTag('회식_소주한잔')" class="theme-tag-btn px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 transition shadow-xs" data-tag="회식_소주한잔">#회식_소주한잔</button>
+          <button onclick="filterByTag('소장님_단골노포')" class="theme-tag-btn px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 transition shadow-xs" data-tag="소장님_단골노포">#소장님_단골노포</button>
+          <button onclick="filterByTag('출장길_혼밥')" class="theme-tag-btn px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 transition shadow-xs" data-tag="출장길_혼밥">#출장길_혼밥</button>
+          <button onclick="filterByTag('의전_정갈한접대')" class="theme-tag-btn px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 transition shadow-xs" data-tag="의전_정갈한접대">#의전_정갈한접대</button>
+        </div>
+
+        <!-- Result Status & Sorting Bar -->
+        <div class="flex items-center justify-between text-xs text-slate-500 pt-1">
+          <div>
+            <span>총 <strong id="restaurant-count" class="text-hdec-green font-bold text-sm">0</strong>개의 식당</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="text-[11px] text-slate-400">정렬:</span>
+            <button onclick="setSortMode('likes')" id="sort-likes" class="font-bold text-hdec-green hover:underline">추천순</button>
+            <span class="text-slate-300">|</span>
+            <button onclick="setSortMode('name')" id="sort-name" class="font-medium text-slate-500 hover:text-slate-800">이름순</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Restaurant Card List Container -->
+      <div id="restaurant-list" class="flex-1 overflow-y-auto p-3 space-y-3 divide-y divide-slate-100">
+        <!-- Rendered dynamically by JavaScript -->
+      </div>
+    </section>
+
+    <!-- Right Panel: Interactive Map -->
+    <section id="map-panel" class="flex-1 h-full relative">
+      <!-- Leaflet Map Container -->
+      <div id="map" class="w-full h-full z-0 bg-slate-100"></div>
+
+      <!-- Floating Map Controls -->
+      <div class="absolute top-4 right-4 z-10 flex flex-col space-y-2">
+        <button onclick="resetMapView()" title="전국 지도 전체보기" class="bg-white hover:bg-slate-50 text-slate-700 p-2.5 rounded-xl shadow-lg border border-slate-200 flex items-center justify-center transition">
+          <i class="ph ph-map-trifold text-lg text-hdec-navy"></i>
+        </button>
+        <button onclick="locateUserPosition()" title="내 위치 중심으로 이동" class="bg-white hover:bg-slate-50 text-slate-700 p-2.5 rounded-xl shadow-lg border border-slate-200 flex items-center justify-center transition">
+          <i class="ph ph-crosshair-simple text-lg text-hdec-green"></i>
+        </button>
+      </div>
+
+      <!-- Quick Legend Badge on Map -->
+      <div class="absolute bottom-6 left-6 z-10 hidden sm:flex items-center space-x-2 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-xl shadow-md border border-slate-200 text-xs font-semibold text-slate-700">
+        <span class="w-2.5 h-2.5 rounded-full bg-hdec-green"></span>
+        <span>현대건설 임직원 인증 단골 맛집</span>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Restaurant Detail Modal -->
+  <div id="detail-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-4 hidden" onclick="handleBackdropClick(event)">
+    <div id="detail-modal-card" class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-modal" onclick="event.stopPropagation()">
+      
+      <!-- Modal Header -->
+      <div class="bg-hdec-navy text-white px-5 py-4 flex items-start justify-between">
+        <div>
+          <div class="flex items-center space-x-2 mb-1">
+            <span id="modal-category" class="bg-hdec-green text-white text-[11px] font-bold px-2 py-0.5 rounded-md">한식</span>
+            <span id="modal-tag" class="text-xs text-emerald-300 font-semibold">#든든한_현장점심</span>
+          </div>
+          <h3 id="modal-name" class="text-xl font-extrabold text-white tracking-tight">식당 이름</h3>
+        </div>
+        <button onclick="closeDetailModal()" class="text-slate-300 hover:text-white p-1 rounded-lg hover:bg-slate-700 transition">
+          <i class="ph ph-x text-xl font-bold"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="p-5 space-y-4 overflow-y-auto">
+        
+        <!-- Comment Box (Full text without summary) -->
+        <div class="bg-emerald-50/70 border border-emerald-100 rounded-xl p-4">
+          <div class="flex items-center space-x-1.5 text-hdec-green font-bold text-xs mb-2">
+            <i class="ph ph-quotes text-base"></i>
+            <span>임직원 찐 추천 코멘트</span>
+          </div>
+          <!-- Full Comment Text -->
+          <p id="modal-comment" class="text-sm text-slate-800 leading-relaxed font-medium whitespace-pre-line">
+            추천 사유 내용이 표시됩니다.
+          </p>
+          <!-- Recommender Name (Small, bottom right) -->
+          <div class="mt-3 text-right">
+            <span id="modal-recommender" class="text-xs text-slate-500 font-semibold bg-white/80 px-2 py-0.5 rounded border border-emerald-200">
+              추천인: 임직원
+            </span>
+          </div>
+        </div>
+
+        <!-- Menu Details -->
+        <div class="space-y-1.5">
+          <h4 class="text-xs font-bold text-slate-500 flex items-center space-x-1">
+            <i class="ph ph-fork-knife text-hdec-green text-sm"></i>
+            <span>[대표 메뉴]</span>
+          </h4>
+          <p id="modal-menu" class="text-sm font-semibold text-slate-800 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+            메뉴 정보
+          </p>
+        </div>
+
+        <!-- Tip Details -->
+        <div class="space-y-1.5">
+          <h4 class="text-xs font-bold text-slate-500 flex items-center space-x-1">
+            <i class="ph ph-lightbulb text-amber-500 text-sm"></i>
+            <span>[방문 꿀팁 / 주차 정보]</span>
+          </h4>
+          <p id="modal-tip" class="text-xs font-medium text-slate-700 bg-amber-50/60 p-2.5 rounded-lg border border-amber-200/80 leading-relaxed">
+            방문 팁 정보
+          </p>
+        </div>
+
+        <!-- Address & Copy -->
+        <div class="space-y-1.5">
+          <h4 class="text-xs font-bold text-slate-500 flex items-center space-x-1">
+            <i class="ph ph-map-pin text-rose-500 text-sm"></i>
+            <span>[식당 위치]</span>
+          </h4>
+          <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-xs">
+            <span id="modal-address" class="text-slate-700 font-medium truncate mr-2">주소 정보</span>
+            <button onclick="copyModalAddress()" class="shrink-0 text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 px-2.5 py-1 rounded border border-slate-300 flex items-center space-x-1 transition shadow-xs">
+              <i class="ph ph-copy"></i>
+              <span>복사</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer: Navigation Links & Like Button -->
+      <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-2">
+        <!-- Like Counter -->
+        <button id="modal-like-btn" onclick="handleModalLikeClick()" class="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:border-rose-300 hover:text-rose-600 transition shadow-xs">
+          <i id="modal-like-icon" class="ph ph-heart text-base text-rose-500"></i>
+          <span id="modal-like-count" class="text-xs font-bold">0</span>
+        </button>
+
+        <!-- Navigation Buttons -->
+        <div class="flex items-center space-x-2 flex-1 justify-end">
+          <a id="modal-link-naver" href="#" target="_blank" class="flex-1 max-w-[130px] text-center text-xs font-bold py-2 px-3 rounded-xl bg-[#03C75A] text-white hover:bg-[#02b350] transition shadow-xs flex items-center justify-center space-x-1">
+            <span>네이버 지도</span>
+            <i class="ph ph-arrow-square-out text-sm"></i>
+          </a>
+          <a id="modal-link-kakao" href="#" target="_blank" class="flex-1 max-w-[130px] text-center text-xs font-bold py-2 px-3 rounded-xl bg-[#FEE500] text-[#191919] hover:bg-[#ebd300] transition shadow-xs flex items-center justify-center space-x-1">
+            <span>카카오맵</span>
+            <i class="ph ph-arrow-square-out text-sm"></i>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg z-50 opacity-0 pointer-events-none transition-opacity duration-200">
+    알림 메시지
+  </div>
+
+  <script>
+    /*
+     * 100% 임직원 실제 설문조사 기반 전국 맛집 데이터셋
+     * 기본 추천 하트(likes): 0
+     * 사용자가 누를 때마다 +1 실시간 증가
+     */
+    const INITIAL_RESTAURANTS = [
+      {
+        id: 1,
+        name: "노형자연산횟집",
+        category: "해산물",
+        region: "제주",
+        address: "제주특별자치도 제주시 노형동 927-7",
+        lat: 33.4862,
+        lng: 126.4831,
+        menu: "자연산 활어회, 지리탕, 참돔",
+        comment: "제주도에 여행 와서 먹어본 횟집 중 가성비 최고였습니다. 회도 두툼하고 싱싱하며 특히 지리탕 국물이 너무 깊어서 제주 출장이나 여행 갈 때마다 무조건 방문합니다.",
+        tip: "제주공항 인근이라 비행기 탑승 전후 첫날이나 마지막날 코스로 최적입니다.",
+        tag: "회식_소주한잔",
+        recommender: "홍성우 부장",
+        likes: 0
+      },
+      {
+        id: 2,
+        name: "송화회관",
+        category: "고기·구이",
+        region: "충청",
+        address: "충북 청주시 청원구 오창읍 중심상업1로 20",
+        lat: 36.7118,
+        lng: 127.4292,
+        menu: "한우 생갈비살, 특수부위",
+        comment: "고기 퀄리티가 정말 압도적입니다. 입안에 넣자마자 살살 녹아내립니다. 현장 중요한 회식이나 가족 모임에 언제나 실패 없는 곳입니다.",
+        tip: "전용 주차장이 널찍하게 마련되어 있어 차량 이용이 편합니다.",
+        tag: "회식_소주한잔",
+        recommender: "박찬규 책임매니저",
+        likes: 0
+      },
+      {
+        id: 3,
+        name: "돌바우횟집",
+        category: "해산물",
+        region: "강원",
+        address: "강원 양양군 현남면 매바위길 51",
+        lat: 37.9542,
+        lng: 128.7612,
+        menu: "자연산 모둠회, 물회",
+        comment: "강원도 출장 중 양양 해안도로를 따라 이동하다 우연히 들른 자연산 횟집입니다. 전날 낚시로 잡은 생선에 따라 모둠회 구성이 달라져 식사의 차원이 다릅니다.",
+        tip: "하루 6팀 한정 예약제로 운영되니 사전 예약 필수, 해안가 공영주차장 이용 가능합니다.",
+        tag: "소장님_단골노포",
+        recommender: "윤규섭 팀장",
+        likes: 0
+      },
+      {
+        id: 4,
+        name: "피어커피 성수",
+        category: "카페·디저트",
+        region: "서울",
+        address: "서울 성동구 광나루로4길 9",
+        lat: 37.5482,
+        lng: 127.0543,
+        menu: "피어 블렌드 아메리카노, 까눌레",
+        comment: "성수동 골목 안쪽에 위치해 분위기가 정갈하고 커피 풍미가 아주 훌륭합니다. 현장 미팅 후 잠시 차분하게 휴식을 취하기에 최고의 장소입니다.",
+        tip: "골목이 좁아 전용 주차는 불가하며 성수동 공영주차장을 이용하세요.",
+        tag: "출장길_혼밥",
+        recommender: "황영 책임",
+        likes: 0
+      },
+      {
+        id: 5,
+        name: "한남동 정민",
+        category: "중식·일식·양식",
+        region: "서울",
+        address: "서울 강서구 마곡동로10길 23 대방디엠시티2차 104호",
+        lat: 37.5614,
+        lng: 126.8321,
+        menu: "해물짬뽕, 우육면, 유린기",
+        comment: "“짜장면, 소주 없음”이라는 문구에 홀려 들어간 퓨전 중식 맛집. 깊고 칼칼한 국물의 해물짬뽕과 독특한 풍미의 우육면이 일품입니다. 전날 마신 술이 싹 내려갑니다.",
+        tip: "매장 규모가 아담하여 4명 이상 단체 방문은 불가하며 연태고량주만 취급합니다.",
+        tag: "든든한_현장점심",
+        recommender: "강철호 책임매니저",
+        likes: 0
+      },
+      {
+        id: 6,
+        name: "단천식당",
+        category: "한식",
+        region: "강원",
+        address: "강원 속초시 아바이마을길 17",
+        lat: 38.2045,
+        lng: 128.5915,
+        menu: "아바이순대, 명태회냉면",
+        comment: "3대째 이어져 오는 진짜배기 손맛입니다. 쫄깃하고 담백한 아바이순대와 매콤달콤한 명태회냉면 조합은 속초 올 때마다 무조건 들르게 만듭니다.",
+        tip: "11:00~14:30 점심 피크에는 대기가 발생하므로 오픈런을 추천합니다.",
+        tag: "소장님_단골노포",
+        recommender: "최정문 차장",
+        likes: 0
+      },
+      {
+        id: 7,
+        name: "만포막국수",
+        category: "한식",
+        region: "서울",
+        address: "서울 중구 동호로14길 2",
+        lat: 37.5552,
+        lng: 127.0112,
+        menu: "이북식 찜닭, 비빔막국수, 접시만두",
+        comment: "부드럽게 쪄낸 닭고기 위에 데친 쪽파를 올리고 특제 다대기 양념장에 찍어 먹으면 술안주와 보양식으로 최고입니다. 동치미 막국수도 깔끔합니다.",
+        tip: "매장 주차가 어려우므로 인근 공영주차장 이용을 권장합니다.",
+        tag: "회식_소주한잔",
+        recommender: "임재형 차장",
+        likes: 0
+      },
+      {
+        id: 8,
+        name: "옛날민속집",
+        category: "한식",
+        region: "서울",
+        address: "서울 종로구 세검정로 33",
+        lat: 37.6012,
+        lng: 126.9582,
+        menu: "가마솥 순두부, 보쌈, 메밀전",
+        comment: "오랜 전통을 지닌 순두부 전문점입니다. 가마솥에서 직접 만들어내는 두부 본연의 고소함과 자극적이지 않고 정갈한 밑반찬이 훌륭합니다.",
+        tip: "주말 및 식사시간엔 대기가 길며, 1층 주차타워에서 발렛 지원됩니다.",
+        tag: "의전_정갈한접대",
+        recommender: "김철호 책임연구원",
+        likes: 0
+      },
+      {
+        id: 9,
+        name: "해골바위",
+        category: "한식",
+        region: "서울",
+        address: "서울 서대문구 이화여대길 75",
+        lat: 37.5598,
+        lng: 126.9465,
+        menu: "제주 흑돼지 김치찌개, 제육볶음",
+        comment: "잘 익은 묵은지와 두툼한 돼지고기를 듬뿍 넣고 끓여낸 찌개 국물이 진국입니다. 밥 두 공기는 거뜬히 비울 수 있는 든든한 현장 밥집입니다.",
+        tip: "골목 안쪽에 위치해 있으며 주차는 인근 유료주차장을 이용해야 합니다.",
+        tag: "든든한_현장점심",
+        recommender: "장준용 책임매니저",
+        likes: 0
+      },
+      {
+        id: 10,
+        name: "정원",
+        category: "고기·구이",
+        region: "서울",
+        address: "서울 종로구 율곡로 116-5",
+        lat: 37.5768,
+        lng: 126.9912,
+        menu: "생삼겹살, 목살구이, 김치찌개",
+        comment: "계동 본사 인근 임직원들이 애용하는 삼겹살 성지입니다. 두툼한 고기 육즙과 파절이의 궁합이 일품이며 회식 자리로 언제나 환영받는 곳입니다.",
+        tip: "저녁 회식 시 사전 예약 필수입니다.",
+        tag: "회식_소주한잔",
+        recommender: "박병윤 책임",
+        likes: 0
+      },
+      {
+        id: 11,
+        name: "경복궁삼계탕",
+        category: "한식",
+        region: "경기",
+        address: "경기 고양시 덕양구 충장로 11",
+        lat: 37.6254,
+        lng: 126.8378,
+        menu: "들깨삼계탕, 맑은삼계탕",
+        comment: "국물이 걸쭉하고 고소한 들깨삼계탕이 시그니처입니다. 푹 고아낸 닭고기가 젓가락만 대도 스르륵 발라져 보양식으로 최고입니다.",
+        tip: "가게 앞 전용 주차 공간이 완비되어 편리합니다.",
+        tag: "든든한_현장점심",
+        recommender: "김성진 책임",
+        likes: 0
+      },
+      {
+        id: 12,
+        name: "평창면옥",
+        category: "면류·분식",
+        region: "서울",
+        address: "서울 종로구 자하문로 27",
+        lat: 37.5802,
+        lng: 126.9715,
+        menu: "메밀 평양냉면, 녹두전",
+        comment: "은은한 육향과 메밀 향이 살아있는 정통 평양냉면입니다. 자극적인 양념 없이도 자꾸만 생각나는 슴슴하고 깊은 맛이 매력적입니다.",
+        tip: "서촌 골목이라 주차가 어려우니 대중교통 이용을 권장합니다.",
+        tag: "출장길_혼밥",
+        recommender: "배종구 팀장",
+        likes: 0
+      },
+      {
+        id: 13,
+        name: "북한강돌짜장",
+        category: "중식·일식·양식",
+        region: "경기",
+        address: "경기 남양주시 조안면 북한강로 856",
+        lat: 37.6041,
+        lng: 127.3312,
+        menu: "돌짜장, 매운갈비찜",
+        comment: "지글지글 뜨겁게 달궈진 돌판 위에 나오는 돌짜장과 매콤한 갈비찜 조합이 환상적입니다. 현장 드라이브 및 주말 외식으로도 제격입니다.",
+        tip: "주말에는 대기가 길어 오픈 시간대에 맞춰 방문하시는 것을 추천합니다.",
+        tag: "든든한_현장점심",
+        recommender: "정문호 책임연구원",
+        likes: 0
+      },
+      {
+        id: 14,
+        name: "검단 두손",
+        category: "한식",
+        region: "경기",
+        address: "인천 서구 검단로 501",
+        lat: 37.5992,
+        lng: 126.6714,
+        menu: "손두부보쌈, 콩국수",
+        comment: "매일 직접 쑤어내는 담백한 손두부와 부드러운 수육이 일품입니다. 여름철 진하고 고소한 콩국수는 더위를 한 방에 날려줍니다.",
+        tip: "매주 월요일 정기 휴무이며 주차 공간이 넉넉합니다.",
+        tag: "든든한_현장점심",
+        recommender: "구성우 책임연구원",
+        likes: 0
+      },
+      {
+        id: 15,
+        name: "백로식당 본점",
+        category: "고기·구이",
+        region: "충청",
+        address: "충북 청주시 상당구 사직대로 379",
+        lat: 36.6368,
+        lng: 127.4891,
+        menu: "한방양념구이, 땡밥(볶음밥)",
+        comment: "특제 한방 양념에 버무린 고기를 호일 위에서 구워 먹는 청주 대표 노포입니다. 고기를 다 먹고 호일을 감싸 볶아주는 땡밥은 예술입니다.",
+        tip: "식당 전용 주차장이 마련되어 있습니다.",
+        tag: "소장님_단골노포",
+        recommender: "이성우 책임매니저",
+        likes: 0
+      },
+      {
+        id: 16,
+        name: "할머니추어탕 신월2호점",
+        category: "한식",
+        region: "서울",
+        address: "서울 양천구 가로공원로 146",
+        lat: 37.5342,
+        lng: 126.8398,
+        menu: "추어탕, 돌솥밥, 추어튀김",
+        comment: "대장~홍대 광역철도 현장 지원 출장 때 알게 된 곳. 진하게 끓여낸 추어탕 한 그릇과 갓 지은 돌솥밥은 현장 점심은 물론 전날 숙취 해소로도 완벽합니다.",
+        tip: "점심 피크 시 대기 발생, 주차 요원이 상주하여 주차를 지원합니다.",
+        tag: "든든한_현장점심",
+        recommender: "이영준 책임매니저",
+        likes: 0
+      },
+      {
+        id: 17,
+        name: "마이쿠페스타 양재점",
+        category: "중식·일식·양식",
+        region: "서울",
+        address: "서울 서초구 매헌로 16",
+        lat: 37.4705,
+        lng: 127.0392,
+        menu: "트러플 파스타, 채끝 스테이크",
+        comment: "분위기가 고급스럽고 깔끔하여 팀 회식이나 타지 손님 접대에 매우 적합한 양식 다이닝입니다. 파스타와 스테이크 퀄리티가 훌륭합니다.",
+        tip: "건물 내 주차 가능하며 사전 룸 예약 추천합니다.",
+        tag: "의전_정갈한접대",
+        recommender: "이규현 책임매니저",
+        likes: 0
+      },
+      {
+        id: 18,
+        name: "우포늪강촌식당",
+        category: "한식",
+        region: "경상",
+        address: "경남 창녕군 유어면 유포로 31",
+        lat: 35.5398,
+        lng: 128.4112,
+        menu: "논고동찜, 어탕국수",
+        comment: "우포늪 자연산 논고동으로 조리해 흙냄새 없이 쫄깃하고 얼큰합니다. 진한 국물의 어탕국수 한 그릇이면 힘이 불끈 솟아납니다.",
+        tip: "식당 앞마당에 여유 있게 주차 가능합니다.",
+        tag: "소장님_단골노포",
+        recommender: "우정택 책임연구원",
+        likes: 0
+      },
+      {
+        id: 19,
+        name: "두남리들기름육회비빔 본점",
+        category: "한식",
+        region: "충청",
+        address: "충남 천안시 동남구 큰시장길 41",
+        lat: 36.8041,
+        lng: 127.1518,
+        menu: "들기름육회비빔밥, 한우소머리국밥",
+        comment: "들기름육회비빔밥 단일 메뉴로 승부하는 집입니다. 고소한 들기름 향과 부드러운 육회의 식감이 한 그릇 안에서 기가 막히게 어우러집니다.",
+        tip: "주차가 어려우니 인근 공영주차장 이용 권장하며 정오 이전 방문 추천합니다.",
+        tag: "든든한_현장점심",
+        recommender: "유제하 책임매니저",
+        likes: 0
+      },
+      {
+        id: 20,
+        name: "남천할매떡볶이",
+        category: "면류·분식",
+        region: "경상",
+        address: "부산 수영구 황령대로489번길 33",
+        lat: 35.1412,
+        lng: 129.1085,
+        menu: "쌀떡볶이, 튀김범벅, 어묵",
+        comment: "큼직하고 쫄깃한 가래떡에 진하고 감칠맛 넘치는 양념이 배어든 부산 대표 떡볶이 노포입니다. 부산 출장길에 가볍게 먹기 좋습니다.",
+        tip: "골목길에 위치하여 차량 이용 시 인근 유료주차장을 이용해야 합니다.",
+        tag: "출장길_혼밥",
+        recommender: "한경진 책임",
+        likes: 0
+      },
+      {
+        id: 21,
+        name: "처인성토속음식",
+        category: "한식",
+        region: "경기",
+        address: "경기 용인시 처인구 남사읍 처인성로827번길 116-3",
+        lat: 37.1352,
+        lng: 127.1581,
+        menu: "묵은지생갈비전골",
+        comment: "힐스테이트 용인마크밸리 현장 인근 맛집. '식객 허영만의 백반기행'에 소개된 집으로 묵은지와 생갈비의 칼칼하고 깊은 국물 맛이 일품입니다.",
+        tip: "매주 월요일은 정기 휴무이며 주차장이 여유롭습니다.",
+        tag: "든든한_현장점심",
+        recommender: "김민준 책임매니저",
+        likes: 0
+      },
+      {
+        id: 22,
+        name: "애향식당",
+        category: "한식",
+        region: "경기",
+        address: "경기 가평군 가평읍 장터길 3-16",
+        lat: 37.8315,
+        lng: 127.5098,
+        menu: "칼국수, 칼만두, 두루치기 볶음",
+        comment: "여럿이 가면 칼만두에 두루치기 볶음을 곁들이고 혼자라면 잣콩국수를 추천합니다. 부담 없이 푸근하게 현장 한 끼 해결하기 좋습니다.",
+        tip: "가평 5일장(5·10·15·20·25·30일)에는 주차가 제한될 수 있습니다.",
+        tag: "출장길_혼밥",
+        recommender: "장한규 책임매니저",
+        likes: 0
+      },
+      {
+        id: 23,
+        name: "부암갈비",
+        category: "고기·구이",
+        region: "경기",
+        address: "인천 남동구 용천로 149",
+        lat: 37.4612,
+        lng: 126.7115,
+        menu: "돼지 생갈비, 젓갈볶음밥",
+        comment: "생갈비 단일 메뉴의 내공이 엄청납니다. 기름지지 않고 담백하며 고소한 풍미가 가득합니다. 갈치속젓볶음밥을 미리 주문해 같이 먹는 것이 핵심 팁입니다.",
+        tip: "웨이팅이 있을 수 있으나 냉방 대기실이 있고 주차가 원활합니다.",
+        tag: "회식_소주한잔",
+        recommender: "김한석 매니저",
+        likes: 0
+      },
+      {
+        id: 24,
+        name: "이이칸지 청라",
+        category: "중식·일식·양식",
+        region: "경기",
+        address: "인천 서구 청라커낼로319번길 9",
+        lat: 37.5348,
+        lng: 126.6541,
+        menu: "믹스카츠(등심·안심), 미소카츠",
+        comment: "하나드림타운 현장 근무 당시 숙소 앞에서 발견한 돈카츠 찐 맛집. 겉바속촉의 정석으로 퇴근 후 시원한 생맥주 한잔 곁들이기 환상적입니다.",
+        tip: "입소문을 타 평일 점심에도 웨이팅이 있으니 피크시간 회피를 권장합니다.",
+        tag: "출장길_혼밥",
+        recommender: "양영재 매니저",
+        likes: 0
+      },
+      {
+        id: 25,
+        name: "항만식당",
+        category: "한식",
+        region: "경기",
+        address: "경기 김포시 월곶면 김포대로 2954",
+        lat: 37.6984,
+        lng: 126.5412,
+        menu: "동태내장 모둠전골",
+        comment: "동태내장 모둠전골에 알과 고니를 추가하고 딱 5분만 더 끓여 먹으면 깊은 맛이 우러납니다. 김포 현장 갈 때마다 일부러 돌아가서라도 들르는 집입니다.",
+        tip: "저녁에는 재료 소진 가능성이 있으니 방문 전 전화 확인을 권장합니다.",
+        tag: "소장님_단골노포",
+        recommender: "김영주 매니저",
+        likes: 0
+      },
+      {
+        id: 26,
+        name: "유포리막국수",
+        category: "면류·분식",
+        region: "강원",
+        address: "강원 춘천시 신북읍 맥국2길 123",
+        lat: 37.9351,
+        lng: 127.7582,
+        menu: "막국수, 편육, 감자부침",
+        comment: "처음에는 비빔막국수로 즐기다가 중간부터 살얼음 동치미 육수를 부어 물막국수로 변신시켜 먹는 맛이 일품입니다. 담백한 편육과도 환상 궁합입니다.",
+        tip: "현대건설이 시공한 '소양강댐'과 연계 나들이 코스로 강력 추천합니다.",
+        tag: "소장님_단골노포",
+        recommender: "김창열 매니저",
+        likes: 0
+      },
+      {
+        id: 27,
+        name: "한서방칼국수",
+        category: "면류·분식",
+        region: "강원",
+        address: "강원 태백시 강원남부로 468",
+        lat: 37.1685,
+        lng: 128.9854,
+        menu: "닭칼국수, 보리밥",
+        comment: "진한 닭 육수의 닭칼국수에 보리밥 한 공기를 추가해 면을 먹고 남은 국물에 밥까지 말아 먹는 조합이 최고입니다. 뜨끈한 국물로 몸을 채우고 싶은 날 제격입니다.",
+        tip: "태백 인근 현장 방문이나 강원도 출장 시 필수 경유 코스입니다.",
+        tag: "든든한_현장점심",
+        recommender: "강석민 매니저",
+        likes: 0
+      },
+      {
+        id: 28,
+        name: "명성옥",
+        category: "한식",
+        region: "강원",
+        address: "강원 강릉시 노암등길 92",
+        lat: 37.7451,
+        lng: 128.9012,
+        menu: "설렁탕, 우족탕",
+        comment: "오래 끓여 진하고 뽀얀 국물에 고기가 듬뿍 들어간 보양탕입니다. 강릉 현장 부임 시 힘을 내야 할 때나 추운 날 따뜻한 한 끼로 최고입니다.",
+        tip: "매일 11시 개점하며 재료 소진 시(오후 3~4시경) 조기 마감합니다.",
+        tag: "든든한_현장점심",
+        recommender: "김성택 책임매니저",
+        likes: 0
+      },
+      {
+        id: 29,
+        name: "한영식당",
+        category: "한식",
+        region: "충청",
+        address: "대전 중구 계룡로874번길 6",
+        lat: 36.3218,
+        lng: 127.4089,
+        menu: "닭볶음탕, 볶음밥",
+        comment: "블루리본 서베이 등재된 닭볶음탕의 성지. 대파를 수북이 넣어 끓여내어 국물이 시원하고 칼칼합니다. 마지막에 볶아 먹는 볶음밥은 필수 코스입니다.",
+        tip: "일방통행 골목이라 인근 오류동 주차장을 이용하는 것이 편리합니다.",
+        tag: "회식_소주한잔",
+        recommender: "이현승 책임매니저",
+        likes: 0
+      },
+      {
+        id: 30,
+        name: "부성민물매운탕",
+        category: "한식",
+        region: "충청",
+        address: "충남 천안시 서북구 2공단1로 34",
+        lat: 36.8451,
+        lng: 127.1321,
+        menu: "새우어죽, 인삼어죽",
+        comment: "천안 출장 때 현지 분들이 추천해 준 찐 로컬 맛집. 비린내 전혀 없이 민물새우의 구수함과 국수의 조화가 완벽합니다. 어죽 입문자도 반하게 됩니다.",
+        tip: "점심 피크 시 손님이 많으니 조금 서둘러 방문하시는 것을 권장합니다.",
+        tag: "든든한_현장점심",
+        recommender: "오치원 책임매니저",
+        likes: 0
+      },
+      {
+        id: 31,
+        name: "따봉시래기 대전봉명점",
+        category: "한식",
+        region: "충청",
+        address: "대전 유성구 온천북로33번길 22",
+        lat: 36.3558,
+        lng: 127.3421,
+        menu: "시래기 차돌쌈, 들깨메밀칼국수",
+        comment: "구수한 시래기 불판 위에 고소한 차돌박이를 구워 함께 싸 먹는 시래기 차돌쌈이 독보적입니다. 출장자나 손님 대접용으로 누구에게나 호평받습니다.",
+        tip: "건물 지하 주차장을 이용하실 수 있습니다.",
+        tag: "의전_정갈한접대",
+        recommender: "김민수 매니저",
+        likes: 0
+      },
+      {
+        id: 32,
+        name: "신선식당",
+        category: "한식",
+        region: "경상",
+        address: "대구 중구 경상감영길 101",
+        lat: 35.8728,
+        lng: 128.5942,
+        menu: "동태탕, 알곤탕",
+        comment: "대구 중앙로의 전설적인 동태탕 노포입니다. 뚝배기 넘치도록 생선살과 알, 고니를 아낌없이 넣어주며 시원 칼칼한 국물 맛이 가히 압권입니다.",
+        tip: "점심시간에는 대기가 길어 12시 이전 방문을 추천합니다.",
+        tag: "든든한_현장점심",
+        recommender: "박재현 프로",
+        likes: 0
+      },
+      {
+        id: 33,
+        name: "감나무집",
+        category: "한식",
+        region: "경상",
+        address: "경남 창원시 성산구 창원대로 788",
+        lat: 35.2154,
+        lng: 128.6651,
+        menu: "오리수육, 오리탕",
+        comment: "기름기 쏙 빠진 담백한 오리수육을 깻잎과 부추에 싸 먹고, 진한 국물의 오리탕으로 마무리하면 현장 피로가 단번에 풀리는 든든한 보양식입니다.",
+        tip: "식당 앞 전용 주차장이 매우 넓어 단체 회식에 좋습니다.",
+        tag: "회식_소주한잔",
+        recommender: "정진우 책임",
+        likes: 0
+      },
+      {
+        id: 34,
+        name: "장어집 본점",
+        category: "고기·구이",
+        region: "서울",
+        address: "서울 강동구 가래여울2길 33",
+        lat: 37.5752,
+        lng: 127.1648,
+        menu: "대물장어구이, 된장찌개",
+        comment: "두툼한 대물장어에 직접 재배한 신선한 채소를 곁들여 푸짐하게 즐기는 구성이 인상적입니다. 현장 기력 보충이나 가족 몸보신 모임에 강력 추천합니다.",
+        tip: "예약 필수, 진입로 주의(오진입 시 올림픽대로 진입하므로 내비 주의).",
+        tag: "의전_정갈한접대",
+        recommender: "김현태 팀장",
+        likes: 0
+      },
+      {
+        id: 35,
+        name: "마포주물럭",
+        category: "고기·구이",
+        region: "서울",
+        address: "서울 동대문구 고산자로34길 11",
+        lat: 37.5805,
+        lng: 127.0398,
+        menu: "한우 주물럭, 육회",
+        comment: "힐스테이트 청량리 메트로블 현장 바로 앞의 숨겨진 노포. 짙은 내공이 묻어나는 한우 주물럭과 신선한 육회로 동료들과 소주 한잔 기울이기 제격입니다.",
+        tip: "주차 공간이 협소하므로 대중교통 이용을 권장합니다.",
+        tag: "소장님_단골노포",
+        recommender: "김권수 책임매니저",
+        likes: 0
+      },
+      {
+        id: 36,
+        name: "우솔",
+        category: "고기·구이",
+        region: "서울",
+        address: "서울 종로구 율곡로5길 14",
+        lat: 37.5778,
+        lng: 126.9835,
+        menu: "모둠 고기코스, 짜파게티",
+        comment: "안국역 인근 숨은 고깃집. 1인분 150g으로 적혀 있지만 사장님이 고기를 끊임없이 내어주셔서 남다른 인심을 맛볼 수 있는 팀 회식 최고 명소입니다.",
+        tip: "매장이 아담하여 12명 안팎의 인원이라면 통째 대관 회식을 추천합니다.",
+        tag: "회식_소주한잔",
+        recommender: "이정욱 책임연구원",
+        likes: 0
+      },
+      {
+        id: 37,
+        name: "고릴라",
+        category: "고기·구이",
+        region: "서울",
+        address: "서울 서대문구 충정로 22-2",
+        lat: 37.5592,
+        lng: 126.9632,
+        menu: "모서리살, 김치찌개",
+        comment: "노포 감성 가득한 고깃집. 모서리살을 노릇하게 구워 먹고 칼칼한 김치찌개로 마무리하면 하루의 고단함이 눈 녹듯 사라집니다.",
+        tip: "좁은 골목 안쪽에 위치하며, 사전 예약 또는 5시경 방문을 권장합니다.",
+        tag: "소장님_단골노포",
+        recommender: "백범창 매니저",
+        likes: 0
+      }
+    ];
+
+    // Global App State
+    let allRestaurants = [...INITIAL_RESTAURANTS];
+    let filteredRestaurants = [...INITIAL_RESTAURANTS];
+    let map = null;
+    let markersLayer = null;
+    let activeMarkerId = null;
+
+    let searchKeyword = "";
+    let selectedRegion = "all";
+    let selectedCategory = "all";
+    let selectedTag = "all";
+    let sortMode = "likes"; // 'likes' or 'name'
+
+    let modalCurrentRestaurant = null;
+
+    // Initialize Map with fallback check
+    function initMap() {
+      if (typeof L === 'undefined') {
+        console.warn("Leaflet library not ready yet, retrying...");
+        setTimeout(initMap, 150);
+        return;
+      }
+      if (map) return;
+
+      map = L.map('map', {
+        zoomControl: false
+      }).setView([36.3, 127.8], 7);
+
+      // CartoDB Voyager tiles (Clean, modern aesthetic)
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap contributors & CartoDB',
+        subdomains: 'abcd',
+        maxZoom: 19
+      }).addTo(map);
+
+      L.control.zoom({ position: 'bottomright' }).addTo(map);
+      markersLayer = L.layerGroup().addTo(map);
+
+      // Render dataset onto list and map
+      applyFilters();
+    }
+
+    function applyFilters() {
+      filteredRestaurants = allRestaurants.filter(item => {
+        // Keyword Search
+        if (searchKeyword.trim() !== "") {
+          const kw = searchKeyword.toLowerCase();
+          const matchName = item.name.toLowerCase().includes(kw);
+          const matchMenu = item.menu.toLowerCase().includes(kw);
+          const matchAddress = item.address.toLowerCase().includes(kw);
+          const matchComment = item.comment.toLowerCase().includes(kw);
+          const matchRecommender = item.recommender.toLowerCase().includes(kw);
+          if (!matchName && !matchMenu && !matchAddress && !matchComment && !matchRecommender) {
+            return false;
+          }
+        }
+
+        // Region Filter
+        if (selectedRegion !== "all" && item.region !== selectedRegion) {
+          return false;
+        }
+
+        // Category Filter
+        if (selectedCategory !== "all" && item.category !== selectedCategory) {
+          return false;
+        }
+
+        // Tag Filter
+        if (selectedTag !== "all" && item.tag !== selectedTag) {
+          return false;
+        }
+
+        return true;
+      });
+
+      // Sort
+      if (sortMode === 'likes') {
+        filteredRestaurants.sort((a, b) => b.likes - a.likes || a.name.localeCompare(b.name, 'ko'));
+      } else {
+        filteredRestaurants.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+      }
+
+      renderList();
+      renderMarkers();
+    }
+
+    // Render Left Restaurant Card List
+    function renderList() {
+      const container = document.getElementById('restaurant-list');
+      const countEl = document.getElementById('restaurant-count');
+      countEl.innerText = filteredRestaurants.length;
+
+      if (filteredRestaurants.length === 0) {
+        container.innerHTML = `
+          <div class="py-16 text-center text-slate-400">
+            <i class="ph ph-magnifying-glass text-4xl mb-2 block text-slate-300"></i>
+            <p class="font-medium text-sm">조건에 맞는 맛집이 없습니다.</p>
+            <button onclick="resetAllFilters()" class="mt-3 text-xs text-hdec-green font-bold hover:underline">
+              필터 초기화
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filteredRestaurants.map(item => {
+        return `
+          <div 
+            id="card-${item.id}"
+            onclick="selectRestaurant(${item.id})"
+            class="p-4 rounded-xl bg-white border border-slate-200 hover:border-hdec-green hover:shadow-md transition-all cursor-pointer group space-y-2.5"
+          >
+            <!-- Card Top: Category, Theme, Like Heart Button -->
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="text-xs font-bold text-hdec-navy">${item.category}</span>
+                <span class="text-slate-300 text-xs">•</span>
+                <span class="text-xs font-semibold text-hdec-green">#${item.tag}</span>
+              </div>
+              <!-- Heart Like Toggle Button -->
+              <button 
+                onclick="toggleLike(event, ${item.id})" 
+                class="flex items-center space-x-1 text-xs font-bold px-2 py-0.5 rounded-full transition ${item.likes > 0 ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-400 hover:text-rose-500'}"
+              >
+                <i class="ph ${item.likes > 0 ? 'ph-heart-fill' : 'ph-heart'} text-sm text-rose-500"></i>
+                <span>${item.likes}</span>
+              </button>
+            </div>
+
+            <!-- Card Title: Restaurant Name -->
+            <h4 class="text-base font-extrabold text-slate-900 group-hover:text-hdec-green transition">
+              ${item.name}
+            </h4>
+
+            <!-- Recommended Menu -->
+            <div class="text-xs text-slate-600 flex items-start space-x-1.5 bg-slate-50 p-2 rounded-lg">
+              <span class="font-bold text-slate-700 shrink-0">[대표 메뉴]</span>
+              <span class="truncate font-medium text-slate-800">${item.menu}</span>
+            </div>
+
+            <!-- Unedited Full Comment -->
+            <div class="text-xs text-slate-700 leading-relaxed font-normal bg-emerald-50/50 p-2.5 rounded-lg border border-emerald-100/70">
+              <p class="whitespace-pre-line text-slate-800">
+                💬 "${item.comment}"
+              </p>
+            </div>
+
+            <!-- Card Bottom: Detail & Navigation Button -->
+            <div class="flex items-center justify-end pt-1">
+              <span class="text-[11px] font-bold text-hdec-green flex items-center space-x-0.5 group-hover:translate-x-0.5 transition-transform">
+                <span>상세보기 & 길찾기</span>
+                <i class="ph ph-arrow-right"></i>
+              </span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Render Leaflet Markers
+    function renderMarkers() {
+      if (!markersLayer || !map) return;
+      markersLayer.clearLayers();
+
+      const bounds = [];
+
+      filteredRestaurants.forEach(item => {
+        if (!item.lat || !item.lng) return;
+
+        bounds.push([item.lat, item.lng]);
+
+        // Pick category icon
+        let iconName = 'ph-fork-knife';
+        if (item.category === '해산물') iconName = 'ph-fish-simple';
+        else if (item.category === '고기·구이') iconName = 'ph-fire';
+        else if (item.category === '카페·디저트') iconName = 'ph-coffee';
+        else if (item.category === '면류·분식') iconName = 'ph-bowl-food';
+
+        const customIcon = L.divIcon({
+          className: 'custom-leaflet-pin-wrapper',
+          html: `
+            <div id="marker-pin-${item.id}" class="custom-marker-pin ${activeMarkerId === item.id ? 'active' : ''}">
+              <i class="ph ${iconName} text-base"></i>
+            </div>
+          `,
+          iconSize: [38, 38],
+          iconAnchor: [19, 19]
+        });
+
+        const marker = L.marker([item.lat, item.lng], { icon: customIcon });
+
+        marker.on('click', () => {
+          selectRestaurant(item.id, false);
+        });
+
+        markersLayer.addLayer(marker);
+      });
+
+      // Fit map bounds if results exist
+      if (bounds.length > 0 && selectedRegion !== 'all') {
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 13 });
+      }
+    }
+
+    // Select restaurant from Card or Marker
+    function selectRestaurant(id, shouldPan = true) {
+      const item = allRestaurants.find(r => r.id === id);
+      if (!item) return;
+
+      activeMarkerId = id;
+
+      // Highlight active marker style
+      document.querySelectorAll('.custom-marker-pin').forEach(pin => pin.classList.remove('active'));
+      const activePin = document.getElementById(`marker-pin-${id}`);
+      if (activePin) activePin.classList.add('active');
+
+      // Scroll list card into view
+      const card = document.getElementById(`card-${id}`);
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        card.classList.add('ring-2', 'ring-hdec-green');
+        setTimeout(() => card.classList.remove('ring-2', 'ring-hdec-green'), 1800);
+      }
+
+      // Fly to marker on map
+      if (map && item.lat && item.lng) {
+        map.flyTo([item.lat, item.lng], 14, {
+          duration: 1.0
+        });
+      }
+
+      // Open Modal Card
+      openDetailModal(item);
+    }
+
+    // Open Detail Modal with complete fields
+    function openDetailModal(item) {
+      modalCurrentRestaurant = item;
+
+      document.getElementById('modal-name').innerText = item.name;
+      document.getElementById('modal-category').innerText = item.category;
+      document.getElementById('modal-tag').innerText = `#${item.tag}`;
+      document.getElementById('modal-comment').innerText = `"${item.comment}"`;
+      document.getElementById('modal-recommender').innerText = `추천인: ${item.recommender || '현대건설 사우'}`;
+      document.getElementById('modal-menu').innerText = item.menu;
+      document.getElementById('modal-tip').innerText = item.tip || "방문 전 영업시간 확인을 권장합니다.";
+      document.getElementById('modal-address').innerText = item.address;
+
+      // Like count & icon in modal
+      updateModalLikeUI();
+
+      // Navigation Link URLs
+      const encodedQuery = encodeURIComponent(item.name);
+      document.getElementById('modal-link-naver').href = `https://map.naver.com/v5/search/${encodedQuery}`;
+      document.getElementById('modal-link-kakao').href = `https://map.kakao.com/link/search/${encodedQuery}`;
+
+      // Show Modal
+      document.getElementById('detail-modal').classList.remove('hidden');
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detail-modal').classList.add('hidden');
+      modalCurrentRestaurant = null;
+    }
+
+    function handleBackdropClick(e) {
+      if (e.target.id === 'detail-modal') {
+        closeDetailModal();
+      }
+    }
+
+    // Like Click Handler in Modal
+    function handleModalLikeClick() {
+      if (!modalCurrentRestaurant) return;
+      modalCurrentRestaurant.likes = (modalCurrentRestaurant.likes || 0) + 1;
+      updateModalLikeUI();
+      renderList();
+      showToast(`'${modalCurrentRestaurant.name}'을(를) 추천했습니다! (+1)`);
+    }
+
+    function updateModalLikeUI() {
+      if (!modalCurrentRestaurant) return;
+      document.getElementById('modal-like-count').innerText = modalCurrentRestaurant.likes;
+      const icon = document.getElementById('modal-like-icon');
+      if (modalCurrentRestaurant.likes > 0) {
+        icon.className = 'ph ph-heart-fill text-base text-rose-500';
+      } else {
+        icon.className = 'ph ph-heart text-base text-rose-500';
+      }
+    }
+
+    // Toggle like on card
+    function toggleLike(e, id) {
+      e.stopPropagation();
+      const item = allRestaurants.find(r => r.id === id);
+      if (!item) return;
+
+      item.likes = (item.likes || 0) + 1;
+      renderList();
+      showToast(`'${item.name}'을(를) 추천했습니다! (+1)`);
+    }
+
+    // Search and Filters
+    function handleSearch(val) {
+      searchKeyword = val;
+      const clearBtn = document.getElementById('search-clear-btn');
+      if (val.length > 0) {
+        clearBtn.classList.remove('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+      }
+      applyFilters();
+    }
+
+    function clearSearch() {
+      document.getElementById('search-input').value = "";
+      searchKeyword = "";
+      document.getElementById('search-clear-btn').classList.add('hidden');
+      applyFilters();
+    }
+
+    function filterByRegion(val) {
+      selectedRegion = val;
+      applyFilters();
+    }
+
+    function filterByCategory(val) {
+      selectedCategory = val;
+      applyFilters();
+    }
+
+    function filterByTag(tag) {
+      selectedTag = tag;
+      document.querySelectorAll('.theme-tag-btn').forEach(btn => {
+        if (btn.getAttribute('data-tag') === tag) {
+          btn.className = 'theme-tag-btn px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap bg-hdec-navy text-white transition shadow-xs';
+        } else {
+          btn.className = 'theme-tag-btn px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 transition shadow-xs';
+        }
+      });
+      applyFilters();
+    }
+
+    function setSortMode(mode) {
+      sortMode = mode;
+      const btnLikes = document.getElementById('sort-likes');
+      const btnName = document.getElementById('sort-name');
+
+      if (mode === 'likes') {
+        btnLikes.className = 'font-bold text-hdec-green hover:underline';
+        btnName.className = 'font-medium text-slate-500 hover:text-slate-800';
+      } else {
+        btnName.className = 'font-bold text-hdec-green hover:underline';
+        btnLikes.className = 'font-medium text-slate-500 hover:text-slate-800';
+      }
+      applyFilters();
+    }
+
+    function resetAllFilters() {
+      searchKeyword = "";
+      selectedRegion = "all";
+      selectedCategory = "all";
+      selectedTag = "all";
+      sortMode = "likes";
+
+      document.getElementById('search-input').value = "";
+      document.getElementById('search-clear-btn').classList.add('hidden');
+      document.getElementById('region-select').value = "all";
+      document.getElementById('category-select').value = "all";
+
+      document.querySelectorAll('.theme-tag-btn').forEach(btn => {
+        if (btn.getAttribute('data-tag') === 'all') {
+          btn.className = 'theme-tag-btn px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap bg-hdec-navy text-white transition shadow-xs';
+        } else {
+          btn.className = 'theme-tag-btn px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 transition shadow-xs';
+        }
+      });
+
+      setSortMode('likes');
+      resetMapView();
+    }
+
+    function resetMapView() {
+      if (map) {
+        map.setView([36.3, 127.8], 7);
+      }
+    }
+
+    function locateUserPosition() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          const { latitude, longitude } = pos.coords;
+          if (map) {
+            map.flyTo([latitude, longitude], 13);
+            showToast("현재 내 위치 중심으로 지도를 이동했습니다.");
+          }
+        }, () => {
+          showToast("위치 권한을 확인할 수 없습니다.");
+        });
+      } else {
+        showToast("브라우저에서 위치 서비스를 지원하지 않습니다.");
+      }
+    }
+
+    function copyModalAddress() {
+      const addr = document.getElementById('modal-address').innerText;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(addr).then(() => {
+          showToast("주소가 클립보드에 복사되었습니다!");
+        });
+      } else {
+        const temp = document.createElement('textarea');
+        temp.value = addr;
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand('copy');
+        document.body.removeChild(temp);
+        showToast("주소가 클립보드에 복사되었습니다!");
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.classList.remove('opacity-0');
+      toast.classList.add('opacity-100');
+      setTimeout(() => {
+        toast.classList.remove('opacity-100');
+        toast.classList.add('opacity-0');
+      }, 2300);
+    }
+
+    // Direct Excel (.xlsx) File Upload & Live Parsing
+    function handleExcelUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+          if (!json || json.length === 0) {
+            showToast("엑셀 파일에 데이터가 없습니다.");
+            return;
+          }
+
+          // Parse rows into our app data format
+          const imported = json.map((row, idx) => {
+            const keys = Object.keys(row);
+            
+            // Flexible column detector
+            const findVal = (terms) => {
+              const matchedKey = keys.find(k => terms.some(t => k.includes(t)));
+              return matchedKey ? String(row[matchedKey]).trim() : "";
+            };
+
+            const name = findVal(['식당', '상호', '이름', '음식점']) || `식당 #${idx + 1}`;
+            const address = findVal(['주소', '위치', '소재지']) || "대한민국";
+            const menu = findVal(['메뉴', '대표', '음식']) || "시그니처 메뉴";
+            const comment = findVal(['이유', '추천', '코멘트', '설명', '사유']) || "임직원 추천 맛집입니다.";
+            const recommender = findVal(['추천인', '사우', '작성자', '이름']) || "임직원";
+            const tip = findVal(['팁', '꿀팁', '주차', '비고']) || "방문 전 전화 확인 권장";
+
+            // Infer region from address
+            let region = "서울";
+            if (address.includes('경기') || address.includes('인천')) region = "경기";
+            else if (address.includes('충남') || address.includes('충북') || address.includes('대전') || address.includes('세종')) region = "충청";
+            else if (address.includes('강원')) region = "강원";
+            else if (address.includes('경북') || address.includes('경남') || address.includes('부산') || address.includes('대구') || address.includes('울산')) region = "경상";
+            else if (address.includes('전남') || address.includes('전북') || address.includes('광주')) region = "전라";
+            else if (address.includes('제주')) region = "제주";
+
+            // Category guessing
+            let category = "한식";
+            if (menu.includes('회') || menu.includes('생선') || menu.includes('장어') || menu.includes('해산물')) category = "해산물";
+            else if (menu.includes('고기') || menu.includes('갈비') || menu.includes('삼겹') || menu.includes('한우')) category = "고기·구이";
+            else if (menu.includes('면') || menu.includes('국수') || menu.includes('냉면') || menu.includes('떡볶이')) category = "면류·분식";
+            else if (menu.includes('커피') || menu.includes('카페') || menu.includes('디저트')) category = "카페·디저트";
+            else if (menu.includes('짬뽕') || menu.includes('파스타') || menu.includes('카츠') || menu.includes('스테이크')) category = "중식·일식·양식";
+
+            // Geocode approximate center per region if lat/lng missing
+            const regionCoordinates = {
+              "서울": { lat: 37.5665, lng: 126.9780 },
+              "경기": { lat: 37.4138, lng: 127.5183 },
+              "충청": { lat: 36.6358, lng: 127.4914 },
+              "강원": { lat: 37.8228, lng: 128.1555 },
+              "경상": { lat: 35.8714, lng: 128.6014 },
+              "전라": { lat: 35.1595, lng: 126.8526 },
+              "제주": { lat: 33.4996, lng: 126.5312 }
+            };
+
+            const baseCoord = regionCoordinates[region] || regionCoordinates["서울"];
+            const jitterLat = (Math.random() - 0.5) * 0.08;
+            const jitterLng = (Math.random() - 0.5) * 0.08;
+
+            return {
+              id: 1000 + idx,
+              name,
+              category,
+              region,
+              address,
+              lat: baseCoord.lat + jitterLat,
+              lng: baseCoord.lng + jitterLng,
+              menu,
+              comment,
+              tip,
+              tag: "든든한_현장점심",
+              recommender,
+              likes: 0
+            };
+          });
+
+          allRestaurants = imported;
+          resetAllFilters();
+          showToast(`엑셀에서 ${imported.length}개 맛집을 성공적으로 불러왔습니다!`);
+        } catch (err) {
+          console.error(err);
+          showToast("엑셀 파일 로드 중 오류가 발생했습니다.");
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    // Mobile View Toggle
+    function setMobileView(view) {
+      const sidebar = document.getElementById('sidebar-panel');
+      const btnList = document.getElementById('btn-show-list');
+      const btnMap = document.getElementById('btn-show-map');
+
+      if (view === 'list') {
+        sidebar.classList.remove('hidden');
+        sidebar.classList.add('w-full');
+        btnList.className = 'px-2.5 py-1 text-xs font-bold rounded-md bg-hdec-green text-white';
+        btnMap.className = 'px-2.5 py-1 text-xs font-bold rounded-md text-slate-300';
+      } else {
+        sidebar.classList.add('hidden');
+        btnMap.className = 'px-2.5 py-1 text-xs font-bold rounded-md bg-hdec-green text-white';
+        btnList.className = 'px-2.5 py-1 text-xs font-bold rounded-md text-slate-300';
+        if (map) map.invalidateSize();
+      }
+    }
+
+    // Launch app safely on window load
+    window.addEventListener('DOMContentLoaded', () => {
+      initMap();
+    });
+  </script>
+</body>
+</html>

@@ -1,18 +1,18 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>현건슐랭 - 전국 맛지도</title>
+  <title>현건슐랭 - 전국 맛지도 (카카오맵)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     :root {
       --primary: #002b49;
       --primary-light: #004d80;
       --accent: #e02424;
+      --kakao-yellow: #fee500;
       --bg: #f8fafc;
       --sidebar-bg: #ffffff;
       --text-main: #191f28;
@@ -31,7 +31,6 @@
       position: relative;
     }
 
-    /* Left Sidebar */
     .sidebar {
       width: 480px;
       min-width: 360px;
@@ -62,19 +61,9 @@
       font-weight: 700;
       margin-bottom: 8px;
     }
-    .header h1 {
-      font-size: 22px;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-    }
-    .header p {
-      margin-top: 4px;
-      font-size: 12.5px;
-      color: #d1d6db;
-      line-height: 1.4;
-    }
+    .header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+    .header p { margin-top: 4px; font-size: 12.5px; color: #d1d6db; line-height: 1.4; }
 
-    /* Filter Controls */
     .filter-section {
       padding: 14px 18px;
       border-bottom: 1px solid var(--border);
@@ -105,10 +94,7 @@
       transition: all 0.15s ease;
     }
     .tab-btn:hover { background: #e9ecef; color: var(--text-main); }
-    .tab-btn.active {
-      background: var(--primary);
-      color: #fff;
-    }
+    .tab-btn.active { background: var(--primary); color: #fff; }
 
     .search-row { display: flex; gap: 8px; }
     .search-box {
@@ -134,10 +120,7 @@
       background: #fafafa;
       outline: none;
     }
-    .search-box input:focus {
-      border-color: var(--primary-light);
-      background: #fff;
-    }
+    .search-box input:focus { border-color: var(--primary-light); background: #fff; }
 
     .status-bar {
       padding: 10px 18px;
@@ -150,11 +133,7 @@
       color: var(--text-muted);
       flex-shrink: 0;
     }
-    .status-bar strong {
-      color: var(--primary);
-      font-weight: 700;
-      font-size: 13px;
-    }
+    .status-bar strong { color: var(--primary); font-weight: 700; font-size: 13px; }
 
     .card-list {
       flex: 1;
@@ -176,28 +155,10 @@
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
     }
-    .card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(0, 43, 73, 0.08);
-      border-color: #cbd5e1;
-    }
-    .card.selected {
-      border-color: var(--primary-light);
-      box-shadow: 0 0 0 2px rgba(0, 77, 128, 0.25);
-      background: #fcfdfd;
-    }
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 6px;
-      gap: 6px;
-    }
-    .card-title {
-      font-size: 16.5px;
-      font-weight: 700;
-      color: var(--text-main);
-    }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 43, 73, 0.08); border-color: #cbd5e1; }
+    .card.selected { border-color: var(--primary-light); box-shadow: 0 0 0 2px rgba(0, 77, 128, 0.25); background: #fcfdfd; }
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; gap: 6px; }
+    .card-title { font-size: 16.5px; font-weight: 700; color: var(--text-main); }
     .card-recommender {
       background: #e8f3fc;
       color: #0c66e4;
@@ -236,31 +197,20 @@
       font-size: 11.5px;
       color: var(--text-muted);
     }
-    .card-footer .menu-preview {
-      max-width: 240px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .card-footer .more-btn {
-      color: var(--primary);
-      font-weight: 700;
-    }
+    .card-footer .menu-preview { max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-footer .more-btn { color: var(--primary); font-weight: 700; }
 
-    /* Right Map Container */
+    /* Right Kakao Map */
     .map-container {
       flex: 1;
       height: 100%;
       position: relative;
-      background: #e2e8f0;
+      background: #f1f5f9;
     }
-    #map {
-      height: 100%;
-      width: 100%;
-    }
+    #map { height: 100%; width: 100%; }
 
-    /* Custom Pin Marker */
-    .k-pin, .leaflet-div-pin {
+    /* Pin Marker */
+    .k-pin {
       background: #002b49;
       color: #ffffff;
       border: 2px solid #ffffff;
@@ -276,14 +226,12 @@
       cursor: pointer;
       transition: transform 0.15s ease, background 0.15s ease;
     }
-    .k-pin:hover, .k-pin.active, .leaflet-div-pin.active {
-      background: #e02424 !important;
-      transform: scale(1.25);
-      z-index: 9999;
-    }
+    .k-pin:hover, .k-pin.active { background: #e02424; transform: scale(1.25); }
 
-    /* Custom Popup Box */
-    .k-popup, .popup-box {
+    /* Popup Box */
+    .k-popup {
+      position: relative;
+      bottom: 45px;
       border-radius: 12px;
       background: #fff;
       padding: 12px 14px;
@@ -291,10 +239,6 @@
       min-width: 230px;
       max-width: 280px;
       font-family: 'Pretendard', sans-serif;
-    }
-    .k-popup {
-      position: relative;
-      bottom: 45px;
     }
     .k-popup::after {
       content: '';
@@ -308,18 +252,9 @@
       display: block;
       width: 0;
     }
-    .k-popup-title, .popup-title {
-      font-size: 15px;
-      font-weight: 800;
-      color: #002b49;
-      margin-bottom: 2px;
-    }
-    .k-popup-sub, .popup-sub {
-      font-size: 11.5px;
-      color: #8b95a1;
-      margin-bottom: 8px;
-    }
-    .k-popup-menu, .popup-menu {
+    .k-popup-title { font-size: 15px; font-weight: 800; color: #002b49; margin-bottom: 2px; }
+    .k-popup-sub { font-size: 11.5px; color: #8b95a1; margin-bottom: 8px; }
+    .k-popup-menu {
       font-size: 12px;
       color: #4e5968;
       background: #f8fafc;
@@ -328,7 +263,7 @@
       margin-bottom: 8px;
       line-height: 1.4;
     }
-    .k-popup-btn, .popup-btn {
+    .k-popup-btn {
       width: 100%;
       background: #fee500;
       color: #191600;
@@ -340,10 +275,9 @@
       cursor: pointer;
       text-align: center;
       display: block;
-      text-decoration: none;
     }
 
-    /* Detail Modal */
+    /* Modal */
     .modal-backdrop {
       display: none;
       position: fixed;
@@ -368,11 +302,7 @@
       box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
       overflow: hidden;
     }
-    .modal-header {
-      padding: 22px 22px 14px;
-      border-bottom: 1px solid var(--border);
-      position: relative;
-    }
+    .modal-header { padding: 22px 22px 14px; border-bottom: 1px solid var(--border); position: relative; }
     .modal-close-btn {
       position: absolute;
       top: 18px;
@@ -390,27 +320,10 @@
       color: #495057;
     }
     .modal-title { font-size: 22px; font-weight: 800; color: var(--primary); }
-    .modal-meta {
-      margin-top: 4px;
-      font-size: 12.5px;
-      color: var(--text-muted);
-      display: flex;
-      gap: 6px;
-    }
+    .modal-meta { margin-top: 4px; font-size: 12.5px; color: var(--text-muted); display: flex; gap: 6px; }
     .modal-meta span.author { color: #0c66e4; font-weight: 700; }
-    .modal-body {
-      padding: 18px 22px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-    .info-block {
-      background: #f8fafc;
-      border-radius: 10px;
-      padding: 12px 14px;
-      border: 1px solid var(--border);
-    }
+    .modal-body { padding: 18px 22px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+    .info-block { background: #f8fafc; border-radius: 10px; padding: 12px 14px; border: 1px solid var(--border); }
     .info-block-label { font-size: 11.5px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; }
     .info-block-content { font-size: 13.5px; line-height: 1.55; color: var(--text-main); white-space: pre-wrap; }
 
@@ -436,10 +349,6 @@
     .btn-naver { background-color: #03c75a; color: #ffffff; }
     .btn-google { background-color: #1a73e8; color: #ffffff; }
   </style>
-  <!-- 1. Kakao Map SDK -->
-  <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=5b64fcf65bb1ceaf33f89229033087d2"></script>
-  <!-- 2. Fallback Leaflet Script -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 
@@ -447,7 +356,7 @@
     <aside class="sidebar">
       <div class="header">
         <div class="badge">🍽️ 2026 현대건설 사내 캠페인</div>
-        <h1>현건슐랭 맛지도</h1>
+        <h1>현건슐랭 맛지도 (카카오맵)</h1>
         <p>임직원 150명이 직접 검증한 전국 맛집 아카이브</p>
       </div>
 
@@ -477,7 +386,7 @@
 
       <div class="status-bar">
         <div>식당 <strong id="resCount">150</strong>곳</div>
-        <div>* 카드를 누르면 지도 위치로 이동합니다</div>
+        <div>* 카드를 누르면 카카오맵 위치로 이동합니다</div>
       </div>
 
       <div class="card-list" id="cardList"></div>
@@ -535,87 +444,49 @@
     let searchLoc = "";
     let selectedId = null;
 
-    let mapType = null; // 'kakao' or 'leaflet'
-    let kakaoMap = null;
-    let leafletMap = null;
-    let kakaoOverlays = [];
-    let leafletMarkers = new Map();
-    let kakaoActivePopup = null;
+    let map = null;
+    let overlays = [];
+    let activePopupOverlay = null;
 
     const regionCenters = {
-      "전체": { lat: 36.2, lng: 127.8, kakaoLevel: 12, leafletZoom: 7 },
-      "서울": { lat: 37.5665, lng: 126.9780, kakaoLevel: 8, leafletZoom: 11 },
-      "경기·인천": { lat: 37.4138, lng: 127.0500, kakaoLevel: 9, leafletZoom: 10 },
-      "충청·대전": { lat: 36.5184, lng: 127.1666, kakaoLevel: 10, leafletZoom: 9 },
-      "강원": { lat: 37.7500, lng: 128.5000, kakaoLevel: 10, leafletZoom: 9 },
-      "영남": { lat: 35.5384, lng: 128.8000, kakaoLevel: 11, leafletZoom: 8 },
-      "호남": { lat: 35.2000, lng: 127.0000, kakaoLevel: 11, leafletZoom: 8 },
-      "제주": { lat: 33.3800, lng: 126.5500, kakaoLevel: 9, leafletZoom: 10 }
+      "전체": { lat: 36.2, lng: 127.8, level: 12 },
+      "서울": { lat: 37.5665, lng: 126.9780, level: 8 },
+      "경기·인천": { lat: 37.4138, lng: 127.0500, level: 9 },
+      "충청·대전": { lat: 36.5184, lng: 127.1666, level: 10 },
+      "강원": { lat: 37.7500, lng: 128.5000, level: 10 },
+      "영남": { lat: 35.5384, lng: 128.8000, level: 11 },
+      "호남": { lat: 35.2000, lng: 127.0000, level: 11 },
+      "제주": { lat: 33.3800, lng: 126.5500, level: 9 }
     };
 
-    function initMapSystem() {
-      // 1. 좌측 150곳 리스트 우선 즉시 렌더링
+    function startKakao() {
       renderCardsOnly();
 
-      // 2. 카카오 지도 초기화 시도
-      let kakaoSuccess = false;
-      try {
-        if (typeof kakao !== 'undefined' && kakao.maps) {
-          const runKakao = () => {
-            try {
-              const container = document.getElementById('map');
-              const options = {
-                center: new kakao.maps.LatLng(36.2, 127.8),
-                level: 12
-              };
-              kakaoMap = new kakao.maps.Map(container, options);
-              const zoomControl = new kakao.maps.ZoomControl();
-              kakaoMap.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
-              mapType = 'kakao';
-              kakaoSuccess = true;
-              renderAll();
-            } catch (err) {
-              console.warn("Kakao constructor failed, fallback:", err);
-              initLeafletFallback();
-            }
+      const script = document.createElement('script');
+      script.type = 'text/javascript';
+      script.src = 'https://dapi.kakao.com/v2/maps/sdk.js?appkey=5b64fcf65bb1ceaf33f89229033087d2&autoload=false';
+      
+      script.onload = () => {
+        kakao.maps.load(() => {
+          const container = document.getElementById('map');
+          const options = {
+            center: new kakao.maps.LatLng(36.2, 127.8),
+            level: 12
           };
+          map = new kakao.maps.Map(container, options);
 
-          if (kakao.maps.load) {
-            kakao.maps.load(runKakao);
-          } else {
-            runKakao();
-          }
-        }
-      } catch (e) {
-        console.warn("Kakao SDK not available:", e);
-      }
+          const zoomControl = new kakao.maps.ZoomControl();
+          map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
 
-      // 3. 만약 0.8초 내에 카카오 지도가 뜨지 않으면(차단/도메인 대기 등) 안전하게 Leaflet으로 즉각 실행
-      setTimeout(() => {
-        if (!kakaoSuccess && !mapType) {
-          initLeafletFallback();
-        }
-      }, 800);
-    }
+          renderAll();
+        });
+      };
 
-    function initLeafletFallback() {
-      if (mapType === 'leaflet' || mapType === 'kakao') return;
-      mapType = 'leaflet';
-      const mapEl = document.getElementById('map');
-      mapEl.innerHTML = '';
+      script.onerror = () => {
+        console.error("카카오 지도 SDK 스크립트 로드 실패");
+      };
 
-      leafletMap = L.map('map', {
-        center: [36.2, 127.8],
-        zoom: 7,
-        zoomControl: true
-      });
-
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap'
-      }).addTo(leafletMap);
-
-      renderAll();
+      document.head.appendChild(script);
     }
 
     function getFilteredData() {
@@ -660,72 +531,50 @@
     function renderAll() {
       renderCardsOnly();
 
+      overlays.forEach(o => o.setMap(null));
+      overlays = [];
+      if (activePopupOverlay) {
+        activePopupOverlay.setMap(null);
+        activePopupOverlay = null;
+      }
+
+      if (!map || typeof kakao === 'undefined' || !kakao.maps) return;
+
       const filtered = getFilteredData();
 
-      if (mapType === 'kakao' && kakaoMap) {
-        kakaoOverlays.forEach(o => o.setMap(null));
-        kakaoOverlays = [];
-        if (kakaoActivePopup) { kakaoActivePopup.setMap(null); kakaoActivePopup = null; }
+      filtered.forEach((item, idx) => {
+        const pos = new kakao.maps.LatLng(item.lat, item.lng);
 
-        filtered.forEach((item, idx) => {
-          const pos = new kakao.maps.LatLng(item.lat, item.lng);
-          const pinDiv = document.createElement('div');
-          pinDiv.className = 'k-pin' + (item.id === selectedId ? ' active' : '');
-          pinDiv.id = `pin-${item.id}`;
-          pinDiv.innerText = idx + 1;
-          pinDiv.onclick = () => { selectItem(item, false); showKakaoPopup(item); };
+        const pinDiv = document.createElement('div');
+        pinDiv.className = 'k-pin' + (item.id === selectedId ? ' active' : '');
+        pinDiv.id = `pin-${item.id}`;
+        pinDiv.innerText = idx + 1;
 
-          const customOverlay = new kakao.maps.CustomOverlay({
-            position: pos,
-            content: pinDiv,
-            yAnchor: 0.5
-          });
-          customOverlay.setMap(kakaoMap);
-          kakaoOverlays.push(customOverlay);
+        pinDiv.onclick = () => {
+          selectItem(item, false);
+          showPopup(item);
+        };
+
+        const customOverlay = new kakao.maps.CustomOverlay({
+          position: pos,
+          content: pinDiv,
+          yAnchor: 0.5
         });
 
-        if (regionCenters[selectedRegion]) {
-          const rc = regionCenters[selectedRegion];
-          kakaoMap.setLevel(rc.kakaoLevel);
-          kakaoMap.panTo(new kakao.maps.LatLng(rc.lat, rc.lng));
-        }
-      } else if (mapType === 'leaflet' && leafletMap) {
-        leafletMarkers.forEach(m => leafletMap.removeLayer(m));
-        leafletMarkers.clear();
+        customOverlay.setMap(map);
+        overlays.push(customOverlay);
+      });
 
-        filtered.forEach((item, idx) => {
-          const icon = L.divIcon({
-            className: 'pin-icon-wrap',
-            html: `<div class="leaflet-div-pin ${item.id === selectedId ? 'active' : ''}" id="pin-${item.id}">${idx + 1}</div>`,
-            iconSize: [32, 32],
-            iconAnchor: [16, 16]
-          });
-
-          const marker = L.marker([item.lat, item.lng], { icon: icon });
-          marker.bindPopup(`
-            <div class="popup-box">
-              <div class="popup-title">${item.name}</div>
-              <div class="popup-sub">${item.region} · ${item.sigungu} (추천: ${item.recommender})</div>
-              <div class="popup-menu"><strong>메뉴:</strong> ${item.menu}</div>
-              <button class="popup-btn" onclick="openModalById(${item.id})">상세정보 & 길찾기</button>
-            </div>
-          `, { offset: [0, -10] });
-
-          marker.on('click', () => selectItem(item, false));
-          marker.addTo(leafletMap);
-          leafletMarkers.set(item.id, marker);
-        });
-
-        if (regionCenters[selectedRegion]) {
-          const rc = regionCenters[selectedRegion];
-          leafletMap.setView([rc.lat, rc.lng], rc.leafletZoom);
-        }
+      if (regionCenters[selectedRegion]) {
+        const rc = regionCenters[selectedRegion];
+        map.setLevel(rc.level);
+        map.panTo(new kakao.maps.LatLng(rc.lat, rc.lng));
       }
     }
 
-    function showKakaoPopup(item) {
-      if (!kakaoMap) return;
-      if (kakaoActivePopup) kakaoActivePopup.setMap(null);
+    function showPopup(item) {
+      if (!map) return;
+      if (activePopupOverlay) activePopupOverlay.setMap(null);
 
       const popupDiv = document.createElement('div');
       popupDiv.className = 'k-popup';
@@ -736,13 +585,13 @@
         <button class="k-popup-btn" onclick="openModalById(${item.id})">상세정보 & 길찾기</button>
       `;
 
-      kakaoActivePopup = new kakao.maps.CustomOverlay({
+      activePopupOverlay = new kakao.maps.CustomOverlay({
         position: new kakao.maps.LatLng(item.lat, item.lng),
         content: popupDiv,
         yAnchor: 1.2
       });
 
-      kakaoActivePopup.setMap(kakaoMap);
+      activePopupOverlay.setMap(map);
     }
 
     function selectItem(item, openPopup) {
@@ -755,19 +604,13 @@
         targetCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }
 
-      document.querySelectorAll(".k-pin, .leaflet-div-pin").forEach(p => p.classList.remove("active"));
+      document.querySelectorAll(".k-pin").forEach(p => p.classList.remove("active"));
       const targetPin = document.getElementById(`pin-${item.id}`);
       if (targetPin) targetPin.classList.add("active");
 
-      if (mapType === 'kakao' && kakaoMap) {
-        kakaoMap.panTo(new kakao.maps.LatLng(item.lat, item.lng));
-        if (openPopup) showKakaoPopup(item);
-      } else if (mapType === 'leaflet' && leafletMap) {
-        leafletMap.flyTo([item.lat, item.lng], 14, { duration: 0.5 });
-        const m = leafletMarkers.get(item.id);
-        if (m && openPopup) {
-          setTimeout(() => m.openPopup(), 300);
-        }
+      if (map) {
+        map.panTo(new kakao.maps.LatLng(item.lat, item.lng));
+        if (openPopup) showPopup(item);
       }
     }
 
@@ -795,9 +638,9 @@
 
     function closeModal() {
       document.getElementById("modalBackdrop").classList.remove("open");
-      if (kakaoActivePopup) {
-        kakaoActivePopup.setMap(null);
-        kakaoActivePopup = null;
+      if (activePopupOverlay) {
+        activePopupOverlay.setMap(null);
+        activePopupOverlay = null;
       }
     }
 
@@ -826,8 +669,447 @@
     });
 
     window.onload = () => {
-      initMapSystem();
+      startKakao();
     };
   </script>
 </body>
 </html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>현건슐랭 - 전국 맛지도 (카카오맵)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #002b49;
+      --primary-light: #004d80;
+      --accent: #e02424;
+      --kakao-yellow: #fee500;
+      --bg: #f8fafc;
+      --sidebar-bg: #ffffff;
+      --text-main: #191f28;
+      --text-sub: #4e5968;
+      --text-muted: #8b95a1;
+      --border: #e5e8eb;
+      --chip-bg: #f2f4f6;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, sans-serif; }
+    html, body { height: 100%; width: 100%; overflow: hidden; background: var(--bg); }
+
+    .app-layout {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      position: relative;
+    }
+
+    .sidebar {
+      width: 480px;
+      min-width: 360px;
+      height: 100%;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      z-index: 1000;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.05);
+      position: relative;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #00233b 0%, #004b7a 100%);
+      color: white;
+      padding: 24px 20px 20px;
+      flex-shrink: 0;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 16px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+    .header p { margin-top: 4px; font-size: 12.5px; color: #d1d6db; line-height: 1.4; }
+
+    .filter-section {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      background: #fff;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .region-tabs {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+    .region-tabs::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      padding: 6px 13px;
+      background: var(--chip-bg);
+      border: 1px solid transparent;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-sub);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .tab-btn:hover { background: #e9ecef; color: var(--text-main); }
+    .tab-btn.active { background: var(--primary); color: #fff; }
+
+    .search-row { display: flex; gap: 8px; }
+    .search-box {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .search-box svg {
+      position: absolute;
+      left: 10px;
+      width: 15px;
+      height: 15px;
+      stroke: var(--text-muted);
+      fill: none;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 8px 10px 8px 32px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 12.5px;
+      background: #fafafa;
+      outline: none;
+    }
+    .search-box input:focus { border-color: var(--primary-light); background: #fff; }
+
+    .status-bar {
+      padding: 10px 18px;
+      background: #fbfbfc;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .status-bar strong { color: var(--primary); font-weight: 700; font-size: 13px; }
+
+    .card-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 16px 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: var(--bg);
+      scroll-behavior: smooth;
+    }
+
+    .card {
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 43, 73, 0.08); border-color: #cbd5e1; }
+    .card.selected { border-color: var(--primary-light); box-shadow: 0 0 0 2px rgba(0, 77, 128, 0.25); background: #fcfdfd; }
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; gap: 6px; }
+    .card-title { font-size: 16.5px; font-weight: 700; color: var(--text-main); }
+    .card-recommender {
+      background: #e8f3fc;
+      color: #0c66e4;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 7px;
+      border-radius: 5px;
+      white-space: nowrap;
+    }
+    .card-location {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary-light);
+      background: #f0f4f8;
+      padding: 2px 7px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    .card-desc {
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--text-sub);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    .card-footer {
+      padding-top: 10px;
+      border-top: 1px dashed var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+    .card-footer .menu-preview { max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-footer .more-btn { color: var(--primary); font-weight: 700; }
+
+    /* Right Kakao Map */
+    .map-container {
+      flex: 1;
+      height: 100%;
+      position: relative;
+      background: #f1f5f9;
+    }
+    #map { height: 100%; width: 100%; }
+
+    /* Pin Marker */
+    .k-pin {
+      background: #002b49;
+      color: #ffffff;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11.5px;
+      font-weight: 800;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    .k-pin:hover, .k-pin.active { background: #e02424; transform: scale(1.25); }
+
+    /* Popup Box */
+    .k-popup {
+      position: relative;
+      bottom: 45px;
+      border-radius: 12px;
+      background: #fff;
+      padding: 12px 14px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.22);
+      min-width: 230px;
+      max-width: 280px;
+      font-family: 'Pretendard', sans-serif;
+    }
+    .k-popup::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 8px 8px 0;
+      border-style: solid;
+      border-color: #fff transparent;
+      display: block;
+      width: 0;
+    }
+    .k-popup-title { font-size: 15px; font-weight: 800; color: #002b49; margin-bottom: 2px; }
+    .k-popup-sub { font-size: 11.5px; color: #8b95a1; margin-bottom: 8px; }
+    .k-popup-menu {
+      font-size: 12px;
+      color: #4e5968;
+      background: #f8fafc;
+      padding: 6px 8px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+    .k-popup-btn {
+      width: 100%;
+      background: #fee500;
+      color: #191600;
+      font-size: 11.5px;
+      font-weight: 800;
+      padding: 7px 0;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      text-align: center;
+      display: block;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-panel {
+      background: #ffffff;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 540px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+    .modal-header { padding: 22px 22px 14px; border-bottom: 1px solid var(--border); position: relative; }
+    .modal-close-btn {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      background: #f1f3f5;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+      color: #495057;
+    }
+    .modal-title { font-size: 22px; font-weight: 800; color: var(--primary); }
+    .modal-meta { margin-top: 4px; font-size: 12.5px; color: var(--text-muted); display: flex; gap: 6px; }
+    .modal-meta span.author { color: #0c66e4; font-weight: 700; }
+    .modal-body { padding: 18px 22px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+    .info-block { background: #f8fafc; border-radius: 10px; padding: 12px 14px; border: 1px solid var(--border); }
+    .info-block-label { font-size: 11.5px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; }
+    .info-block-content { font-size: 13.5px; line-height: 1.55; color: var(--text-main); white-space: pre-wrap; }
+
+    .map-btn-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      padding: 14px 22px 20px;
+      border-top: 1px solid var(--border);
+      background: #fff;
+    }
+    .map-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 0;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .btn-kakao { background-color: #fee500; color: #191600; }
+    .btn-naver { background-color: #03c75a; color: #ffffff; }
+    .btn-google { background-color: #1a73e8; color: #ffffff; }
+  </style>
+</head>
+<body>
+
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="header">
+        <div class="badge">🍽️ 2026 현대건설 사내 캠페인</div>
+        <h1>현건슐랭 맛지도 (카카오맵)</h1>
+        <p>임직원 150명이 직접 검증한 전국 맛집 아카이브</p>
+      </div>
+
+      <div class="filter-section">
+        <div class="region-tabs" id="regionTabs">
+          <button class="tab-btn active" data-region="전체">전체 (150)</button>
+          <button class="tab-btn" data-region="서울">서울</button>
+          <button class="tab-btn" data-region="경기·인천">경기·인천</button>
+          <button class="tab-btn" data-region="충청·대전">충청·대전</button>
+          <button class="tab-btn" data-region="강원">강원</button>
+          <button class="tab-btn" data-region="영남">영남</button>
+          <button class="tab-btn" data-region="호남">호남</button>
+          <button class="tab-btn" data-region="제주">제주</button>
+        </div>
+
+        <div class="search-row">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="inputName" placeholder="맛집명 검색 (예: 한서방, 태화루)">
+          </div>
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" stroke-width="2"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            <input type="text" id="inputLoc" placeholder="시군구 검색 (예: 종로구, 해운대)">
+          </div>
+        </div>
+      </div>
+
+      <div class="status-bar">
+        <div>식당 <strong id="resCount">150</strong>곳</div>
+        <div>* 카드를 누르면 카카오맵 위치로 이동합니다</div>
+      </div>
+
+      <div class="card-list" id="cardList"></div>
+    </aside>
+
+    <main class="map-container">
+      <div id="map"></div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal-panel" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <button class="modal-close-btn" onclick="closeModal()" aria-label="닫기">&times;</button>
+        <div class="modal-title" id="mName">식당명</div>
+        <div class="modal-meta">
+          <span id="mRegionLoc">지역 · 시군구</span>
+          <span>•</span>
+          <span>추천인: <span class="author" id="mAuthor">-</span></span>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <div class="info-block">
+          <div class="info-block-label">📍 식당 위치 / 주소</div>
+          <div class="info-block-content" id="mAddr">주소 정보</div>
+        </div>
+        <div class="info-block">
+          <div class="info-block-label">⭐ 대표 추천 메뉴</div>
+          <div class="info-block-content" id="mMenu">대표 메뉴</div>
+        </div>
+        <div class="info-block">
+          <div class="info-block-label">💡 방문 팁 (웨이팅 / 주차 등)</div>
+          <div class="info-block-content" id="mTips">방문 팁</div>
+        </div>
+        <div class="info-block">
+          <div class="info-block-label">📝 식당과의 인연 & 추천 사유</div>
+          <div class="info-block-content" id="mDesc">추천 상세</div>
+        </div>
+      </div>
+
+      <div class="map-btn-group">
+        <a id="btnKakao" target="_blank" class="map-btn btn-kakao">카카오맵</a>
+        <a id="btnNaver" target="_blank" class="map-btn btn-naver">네이버지도</a>
+        <a id="btnGoogle" target="_blank" class="map-btn btn-google">구글지도</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DATA = [{"id": 1, "name": "노형자연산횟집", "region": "제주", "sigungu": "제주시", "address": "제주시 노형동 2526-2", "recommender": "홍승모", "desc": "제주도에 여행와서, 바가지 쓰지 않고 진정한 자연산 회를  저렴하게 먹고 싶을때.(시내에 있어 바다는 보이지 않습니다. 제주도민들이 좋아하는 횟집 | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n제주신화월드 현장 근무시, 집근처(제주시, 공항근처) 동네 횟집입니다.", "menu": "그날 잡은 제주산 자연산 회, 양식은 취급하지 않습니다. 인당 3~4만원 정도.  육지의 횟집처럼 화려한 밑반찬이 나오는 집은 아닙니다. 하지만 나오는 몇가지 밑반찬은 모두 맛있습니다. 마지막에 나오는 자연산 생선구이와, 매운탕이 일품입니다.", "tips": "반드시 방문 전에 전화하세요. \"오늘 물고기 있나요?\" 그날 날씨에 따라(덥거나, 비오거나) 자연산 횟감이 없을 수 있습니다. 예약시 현대건설 직원이라고 말씀드리면 잘해주실 겁니다.", "lat": 33.500715, "lng": 126.5274}, {"id": 2, "name": "옹심이 칼국", "region": "영남", "sigungu": "울진군", "address": "경북 울진군 북면 덕구온천로 678", "recommender": "박효수", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n고향", "menu": "옹심이 칼국수, 파전, 막걸리 등 모두 맛있는데요. 그중에서도 무채와 곁들여 먹는 파전 꼭 추천드립니다.", "tips": "특별한 팁은 없어요. 시골이라 사람 많으면 그냥 기다리세요. 기다린 보람이 있으실거에요.", "lat": 36.9912, "lng": 129.398086}, {"id": 3, "name": "돌바우횟집", "region": "강원", "sigungu": "양양군", "address": "강원도 양양군 매바위길 51", "recommender": "윤규섭", "desc": "동해안 여행 중 \"소박하게 먹을 수 있는\", \"믿을 수 있는\" 자연산 횟집\n강원도 출장 중 양양 해안도로를 따라 이동 중 우연히 들린 자연산 횟집", "menu": "자연모듬회(그 전날 낚시로 잡은 회로 메뉴가 구성됨). 중자만 먹어도 4명이 배가 부릅니다....", "tips": "6팀정도만 예약을 받아 사전에 연락 필수. 주인분께서 써빙할 수 있는 여력까지만 예약을 받아 음식의 퀄러티와 서비스가 굿!! 주차는 식당 앞 뿐만 넓은 해안가 공영주차장이 다~", "lat": 38.077292, "lng": 128.620314}, {"id": 4, "name": "피어커피 성", "region": "서울", "sigungu": "성동구", "address": "서울 성동구 광나루로4가길 24, 1층", "recommender": "박현", "desc": "내가 더 이상 젊지 않다고 느껴지거나 힙해지고 싶을 때\n힙하고 핫한 성수지역", "menu": "아몬드 크로아상과 함께 먹는 플랫화이트", "tips": "차분한 분위기를 좋아하신다면 조금 일찍 움직이시면 좋아요. 오후가 될 수록 사람들이 많아 집니다.", "lat": 37.566437, "lng": 127.033796}, {"id": 5, "name": "뜰이있는집", "region": "충청·대전", "sigungu": "제천시", "address": "충북 제천시 하소천길 176", "recommender": "안영탁", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n직장동료 추천 (충북 단양 휴양소 부근 맛집)", "menu": "해물 모둠장, 보리굴비", "tips": "예약 필수, 웨이팅 비추천", "lat": 37.131975, "lng": 128.210338}, {"id": 6, "name": "진미막국수", "region": "강원", "sigungu": "속초시", "address": "강원 속초시 설악금강대교로 46-1", "recommender": "권계환", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n지인의 소개", "menu": "동치미막국수", "tips": "15:00~16:30 브레이크 타임", "lat": 37.201349, "lng": 128.591943}, {"id": 7, "name": "감포생밀", "region": "영남", "sigungu": "대구", "address": "대구 북구 침산남로7길 2-1 감포생밀복", "recommender": "이승일", "desc": "출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\nHS 달성공원역 출장", "menu": "밀복지리", "tips": "정보 없음", "lat": 35.867612, "lng": 128.598991}, {"id": 8, "name": "군산 한일옥", "region": "호남", "sigungu": "군산시", "address": "전북특별자치도 군산시 구영3길 63 1층", "recommender": "김준형", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n고향입니다.", "menu": "무우국, 육회비빔밥(육회비빔밥은 소 잡는 날인  평일에만 주문이 가능)", "tips": "주말, 식사 피크시간대에는 웨이팅, 매장 앞 주차 가능(만차일 시 인근 공영주차장 이용), 바로 맞은 편에 영화 8월의 크리스마스 촬영지인 초원사진관 있어 식사 전후 둘러보기 좋음", "lat": 35.968799, "lng": 126.73696}, {"id": 9, "name": "한남동 정민", "region": "서울", "sigungu": "강서구", "address": "서울 강서구 마곡동로10길 23 대방디엠시티오피스텔2차 1층 104호", "recommender": "강철호", "desc": "전날 마신 술이 싹 내려가는 ‘해장 종결지’\n현장 근처 우연히 지나가다 \"짜장면, 소주 없음\" 이라는 문구가 특이하여 발견.", "menu": "해물짬뽕이 단연 1등!! 우육면도 독특한 풍미와 함께 베리굿!!!", "tips": "규모가 작아서 4명이상은 불가합니다. 정말 소주 안팔고 연태고량주만 팔아요. 15~17:30 브레이크 타입 있습니다.", "lat": 37.548664, "lng": 126.850214}, {"id": 10, "name": "리애", "region": "서울", "sigungu": "강남구", "address": "강남구 선릉로16길 6", "recommender": "송경훈", "desc": "출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n동내 맛집 우연히 알게됨", "menu": "숙성된 돈까스의 부드러운 맛  로스까스, 히래까스", "tips": "점심시간시 웨이팅 발생 오픈런 또는 점심시간 이후 방문 추천, 주차는 불가능", "lat": 37.519675, "lng": 127.043352}, {"id": 11, "name": "염포오리탕", "region": "영남", "sigungu": "북구", "address": "울산 북구 방어진순환도로 1393 1층", "recommender": "한성협", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’\n고향이기도 하고 울산 H-DOCK 현장의 동기와의 만남 및 울산신항 남방파제 시절에도 방문한 맛집.  30년 이상 됨.", "menu": "오리탕 단일 메뉴, 볶음밥은 꼭 드세요.", "tips": "매주 일요일 휴무, 조금 자극적일 수도 있지만 맛있고 순살도 선택 가능합니다.", "lat": 35.540847, "lng": 129.312985}, {"id": 12, "name": "장어집 본점", "region": "서울", "sigungu": "강동구", "address": "서울 강동구 가래여울2길 33", "recommender": "김현태", "desc": "몸이 허할때 기력 보충 | 명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n부모님 소개로 알게 됨, 가족모임/건강회복 에 최적의 장소", "menu": "대물장어를 합리적 가격에 질좋은 채소(직접 제배)와 함께 즐길수 있음", "tips": "예약 필수, 도보 이용 불가, 첫방문시 진입로 유의 (잘못들어가면 올림픽대로)", "lat": 37.528822, "lng": 127.121044}, {"id": 13, "name": "팔복황제누룽지탕 분당직영점", "region": "경기·인천", "sigungu": "성남시", "address": "경기 성남시 분당구 구미로192번길 4 1층", "recommender": "임창근", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n거주지 근처 맛집", "menu": "해물 누룽지탕", "tips": "점심에는 웨이팅이 꽤 있고, 저녁에는 크게 웨이팅이 없습니다. 식당가가 모여있어서 주차는 쉽습니다.", "lat": 37.423758, "lng": 127.125193}, {"id": 14, "name": "북한강돌짜장", "region": "경기·인천", "sigungu": "남양주시", "address": "경기도 남양주시 화도읍 북한강로1112번길 6", "recommender": "우승우", "desc": "바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’\n해비치cc 출장 중", "menu": "돌짜장", "tips": "여러명이 함께 가서 돌짜장과 갈비찜을 같이 드세요.", "lat": 37.632742, "lng": 127.213274}, {"id": 15, "name": "완도머스", "region": "충청·대전", "sigungu": "대전광역시", "address": "대전광역시 유성구 신성로 103", "recommender": "박창범", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’ | 명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n선박해양플랜트연구소 출장 중 방문", "menu": "굴전복국밥 + 문어숙회", "tips": "점심시간보다 약간 일찍 혹은 약간 늦게 가시면 좋습니다.", "lat": 36.35318, "lng": 127.38533}, {"id": 16, "name": "그집순대국", "region": "경기·인천", "sigungu": "동두천시", "address": "경기 동두천시 장고갯로 157 제1동(생연동)", "recommender": "이수영", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’\n동두천 지역 주민", "menu": "뽈살순대국", "tips": "건물 뒷쪽 주차장 넓어서 편해요.", "lat": 37.906057, "lng": 127.062538}, {"id": 17, "name": "여의도양지탕본관", "region": "서울", "sigungu": "영등포구", "address": "서울 영등포구 국회대로70길 7", "recommender": "이규헌", "desc": "땀 흘린 후에 찾아가는 맛집\n아내와 서울둘레길14코스(약 2시간 반)를 걷고 집으로 돌아가는 길, 버스 환승하는 곳에서 배가 고파 음식점을 찾다가 무작정 들어간 집입니다. 이제는 이거 먹으려고 둘레길을 가요~", "menu": "양지탕에 마나라는 특수부위가 들어가는데 호불호가 있겠지만 저는 완전 호입니다. (귀한 부위)", "tips": "저는 주말에 둘레길 한코스 걷고 집에 돌아가는 길에 들르는 집이라 다른 시간대는 잘 모르겠네요. 여의도라서 점심엔 사람이 많을 것 같습니다.", "lat": 37.52669, "lng": 126.899985}, {"id": 18, "name": "청우고깃간 정육식당", "region": "호남", "sigungu": "순천시", "address": "전남광주 순천시 중앙초등길 165 1층(순천역 인근)", "recommender": "이용석", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n율촌산단 근무 시 아는 공무원이 추천해줌 / 준공 즈음 알게 되어 현장을 떠나기 전 세번 밖에 못 먹고 온게 한으로 남아 있음", "menu": "안심 구이", "tips": "한적한 시간에 방문하여 꼭 사장님이 직접 구워주는 안심 구이를 먹어야 함.", "lat": 35.158528, "lng": 126.853016}, {"id": 19, "name": "마포주물럭", "region": "서울", "sigungu": "동대문구", "address": "서울 동대문구 고산자로34길 11", "recommender": "김권수", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\nHS 청량리 메트로블 현장 출구 앞 2M에 위치 (완공된 지금도 바로 앞에 위치) / 숨겨진 한우 주물럭 노포 맛집입니다", "menu": "한우 주물럭, 한우 육회", "tips": "주차는 어렵습니다, 노포 맛집 애용자들에게 추천하고 싶습니다", "lat": 37.577035, "lng": 127.040948}, {"id": 20, "name": "양반수제비", "region": "충청·대전", "sigungu": "서구", "address": "대전 서구 문정로90번길 21", "recommender": "이연우", "desc": "빠르고 맛있게 별미로 먹는 점심 맛집\n힐스테이트 둔산 현장", "menu": "순한수제비와(꼭 얼큰수제비 말고 순한 수제비 먹어야 함) 감자채전", "tips": "주차는 주변 골목에 해야 함. 방문한 김에 주변의 대전 명물 성심당을 롯데백화점에 가서 방문 가능 ~!", "lat": 37.547894, "lng": 126.676619}, {"id": 21, "name": "검단 두손칼국수", "region": "경기·인천", "sigungu": "검단구", "address": "인천 검단구 원당대로 99 .현빌딩 103호", "recommender": "고현석", "desc": "깔끔한 칼국수? 든든한 보쌈? 그냥 둘 다 먹어!\n하나드림타운그룹헤드쿼터신축현장 근무시 발견!", "menu": "단일메뉴 - 칼국수", "tips": "영업시간이 오전11시~오후1시, 즉 2시간만 영업합니다. 웨이팅 당연히 있지만 회전율이 매우 빠릅니다. ㅎㅎ 주차는 인근 도로가에 세웁니다. 대기명단에 이름/인원수만 적으면 됩니다. 자리에 앉자마자 칼국수와 보쌈메뉴가 나옵니다.  흑미밥은 셀프코너에서 양껏 드시면 됩니다. 이 모든것이 1인 7000원! ㅎㅎ", "lat": 37.457937, "lng": 126.701567}, {"id": 22, "name": "방화동 교동짬뽕", "region": "서울", "sigungu": "강서구", "address": "서울 강서구 금낭화로24나길 21 이루미팰리스 101호", "recommender": "주현수", "desc": "전날 마신 술이 싹 내려가는 ‘해장 종결지’\n와이프와 매운짬뽕 매니아라 여기저기 돌며 찾아내었어요!", "menu": "불짬뽕! 찹쌀탕수육도 너무 맛있으니 꼭 같이 드셔보세요.", "tips": "11시 오픈런 미리 해야 안 기다리고 먹을 수 있어요! 주차는 주변 골목에!", "lat": 37.548723, "lng": 126.847815}, {"id": 23, "name": "처인성토속음식", "region": "경기·인천", "sigungu": "용인시", "address": "경기 용인시 처인구 남사읍 처인성로827번길 116-3", "recommender": "김민준", "desc": "출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n힐스테이트 용인마크밸리 현장 근처에 있고, 주변에 가족끼리 놀러가는 길에 들려서 맛있게 먹었습니다(허영만 백반기행 촬영지)", "menu": "묵은지생갈비전골", "tips": "월요일은 휴무 입니다.", "lat": 37.237738, "lng": 127.175462}, {"id": 24, "name": "체나레인서촌", "region": "서울", "sigungu": "종로구", "address": "서울 종로구 자하문로7길 76 1층", "recommender": "이승준", "desc": "정통 이탈리안 음식이 먹고싶을때 또는 가족 및 지인과의 품격있는 오붓한 식사장소로 추천합니다.\n평소 이탈리안 음식을 좋아하던 중 지인의 소개로 알게 되었습니다. 주머니속에 넣고 다니는 든든한 히든카드 ^^", "menu": "블랙뽈뽀, 스콜리오, 트로플뇨끼, 보테르가, 봉골레 등 다 맛있습니다.", "tips": "이른 저녁시간 해질력 또는 저녁 시간 이후 와인한잔과 간단한 식사에 어울리는 곳입니다. 주차는 인근 공영주차장 이용 가능하더라고요", "lat": 37.569708, "lng": 126.977524}, {"id": 25, "name": "군위식당", "region": "서울", "sigungu": "대구시", "address": "대구시 중구 경상감영길 101 1층", "recommender": "이우현", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’ | 눈치 안 보고 편하게 먹는 ‘혼밥/혼술 명당’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’\nHS대구역, HS도원센트럴, HS동인센트럴, HS대구역오페라 등 주변 현장 중심에 있음. 성시경먹을텐데 및 싸이방문으로 더 유명해짐.", "menu": "돼지국밥 과 수육", "tips": "감영공원 주차 가능.", "lat": 37.564685, "lng": 126.996419}, {"id": 26, "name": "간이횟집", "region": "서울", "sigungu": "송파구", "address": "서울 송파구 백제고분로7길 52 1층", "recommender": "채영호", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’\n집근처 맛집", "menu": "광어+우럭", "tips": "횟감 아래에 무채를 깻잎쌈에 듬뿍 올려 특제 장과 함께 먹습니다.", "lat": 37.513461, "lng": 127.104276}, {"id": 27, "name": "유진", "region": "호남", "sigungu": "담양군", "address": "전남광주 담양군 금성면 시암골로 17", "recommender": "성윤호", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n부모님과 어릴때부터 다녔던 곳", "menu": "메뉴는 청둥오리전골 단일메뉴로 인원수에 맞게 양만 정하면 됩니다. 일반 오리가 아닌 식용청둥오리로 처음에는 국물이 끓으면 같이 주문 야채를 숨만 죽여서 소스(식당소시+들깨가루)를 찍어서 야채 먼저 먹고 있으면 고기가 익습니다. 그러면 익은 고기와 함께 야채와 같이 드시고 나서 국물은 밥과 함께 적셔서(또는 말아서) 같이 드시면 정말 보양식으로 최고입니다. 또한 고기를 다 드시고 나면 국물에 쑥을 넣어주시는데 그 후에 국물은 아예 다른 맛으로 변해서 진하고 맛있는 국물이 됩니다.", "tips": "주말에는 웨이팅이 많아서 가능한 오픈런 하시구요~평일에도 조금 일찍 가시는걸 추천드립니다. 주차장은 넓어서 크게 문제가 없고 어르신들이 대부분이시라는건 정확히 맛집이겠죠?^^", "lat": 35.157636, "lng": 126.856093}, {"id": 28, "name": "우판사판", "region": "경기·인천", "sigungu": "고양시", "address": "경기도 고양시 덕양구 은빛로29번길 8 (화정동 929-2)", "recommender": "김덕기", "desc": "미취학 아이가 좋아할 만한 맛있는 소양념 갈비집\n처가집 고향으로 아이가 좋아하는 맛집", "menu": "소양념 갈비 + 냉면", "tips": "식사시간이 아님에도 불구하고 웨이팅이 있을 맛집. 경기도 화정역 3번출구에서 도보 약 5분 거리", "lat": 37.659584, "lng": 126.832873}, {"id": 29, "name": "부영도가니탕", "region": "서울", "sigungu": "종로구", "address": "서울 종로구 북촌로 141", "recommender": "김대왕", "desc": "바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’\n점심시간에 아내가 아이들과 오면 항상 같이 가는 식당입니다. 아이들이 먹을 수 있는 회사 근처 곰탕집을 알아보다가 알게된 집인데 남녀노소 모두다 좋아할만한 메뉴에 바로 앞 공영주차장과 삼청공원이 있어 이용하기 편라합니다.", "menu": "도가니탕", "tips": "아이들꺼는 안시켜도 따로 한그릇 더 줍니다", "lat": 37.570269, "lng": 126.981133}, {"id": 30, "name": "청아가든", "region": "영남", "sigungu": "울진군", "address": "경북 울진군 북면 맞덕구길 2", "recommender": "정연재", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n신한울 원자력 3,4호기 건설현장 맛집", "menu": "오리능이한방백숙, 모든 반찬 맛집", "tips": "덕구온천 인근으로 식당 셔틀이용 가능", "lat": 36.990307, "lng": 129.399336}, {"id": 31, "name": "상아식", "region": "호남", "sigungu": "여수시", "address": "전남광주 여수시 어항단지로 21", "recommender": "임현수", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n처가집에서 가까워서 명절 연휴에는 가족들과 꼭 방문하는 식당", "menu": "원조통장어탕", "tips": "주차는 인근  엑스포해수피아 주차장에 가능함, 항상 손님이 많습니다.", "lat": 35.163416, "lng": 126.

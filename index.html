@@ -1,500 +1,326 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>현건슐랭 - 전국 맛지도 (카카오맵)</title>
-  <!-- favicon.ico 404 방지 -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>">
-  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-  <style>
-    :root {
-      --primary: #002b49;
-      --primary-light: #004d80;
-      --accent: #e02424;
-      --bg: #f8fafc;
-      --sidebar-bg: #ffffff;
-      --text-main: #191f28;
-      --text-sub: #4e5968;
-      --text-muted: #8b95a1;
-      --border: #e5e8eb;
-      --chip-bg: #f2f4f6;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, sans-serif; }
-    html, body { height: 100%; width: 100%; overflow: hidden; background: var(--bg); }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>현건슐랭 맛지도 | 현대건설 임직원이 직접 검증한 전국 맛집</title>
+<meta name="description" content="현대건설 임직원이 직접 검증한 전국 맛집 150곳을 지도에서 찾아보세요.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{
+  --ink:#16201b; --sub:#4d5a53; --mute:#8b948f;
+  --green:#0b6b47; --green-d:#084d34; --green-t:#e3efe9;
+  --sun:#ffc20e; --paper:#f1f4f2; --card:#fff; --line:#d8dfdb;
+  --panel:420px;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:var(--ink);background:var(--paper);display:flex;flex-direction:column;height:100dvh;letter-spacing:-.01em}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
 
-    .app-layout { display: flex; height: 100vh; width: 100vw; position: relative; }
-    .sidebar {
-      width: 480px; min-width: 360px; height: 100%;
-      background: var(--sidebar-bg); border-right: 1px solid var(--border);
-      display: flex; flex-direction: column; z-index: 1000;
-      box-shadow: 4px 0 20px rgba(0,0,0,0.05); position: relative;
-    }
-    .header { background: linear-gradient(135deg, #00233b 0%, #004b7a 100%); color: white; padding: 24px 20px 20px; flex-shrink: 0; }
-    .badge {
-      display: inline-block; background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.25);
-      color: #fff; padding: 4px 10px; border-radius: 16px; font-size: 11px; font-weight: 700; margin-bottom: 8px;
-    }
-    .header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
-    .header p { margin-top: 4px; font-size: 12.5px; color: #d1d6db; line-height: 1.4; }
+/* header */
+header{background:var(--green);color:#fff;padding:14px 24px 15px;border-bottom:4px solid var(--sun);flex:none}
+header h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.03em;line-height:1.2}
+header p{margin:3px 0 0;font-size:14px;font-weight:500;color:#cfe5da}
 
-    .filter-section { padding: 14px 18px; border-bottom: 1px solid var(--border); background: #fff; flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; }
-    .region-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
-    .region-tabs::-webkit-scrollbar { display: none; }
-    .tab-btn {
-      padding: 6px 13px; background: var(--chip-bg); border: 1px solid transparent; border-radius: 20px;
-      font-size: 13px; font-weight: 600; color: var(--text-sub); cursor: pointer; white-space: nowrap; transition: all 0.15s ease;
-    }
-    .tab-btn:hover { background: #e9ecef; color: var(--text-main); }
-    .tab-btn.active { background: var(--primary); color: #fff; }
+main{flex:1;min-height:0;display:grid;grid-template-columns:var(--panel) 1fr}
 
-    .search-row { display: flex; gap: 8px; }
-    .search-box { flex: 1; position: relative; display: flex; align-items: center; }
-    .search-box svg { position: absolute; left: 10px; width: 15px; height: 15px; stroke: var(--text-muted); fill: none; }
-    .search-box input {
-      width: 100%; padding: 8px 10px 8px 32px; border: 1px solid var(--border); border-radius: 8px;
-      font-size: 12.5px; background: #fafafa; outline: none;
-    }
-    .search-box input:focus { border-color: var(--primary-light); background: #fff; }
+/* left panel */
+.panel{display:flex;flex-direction:column;min-height:0;background:var(--paper);border-right:1px solid var(--line)}
+.filters{flex:none;padding:14px 16px 12px;background:#fff;border-bottom:1px solid var(--line)}
+.flabel{font-size:12px;font-weight:700;color:var(--sub);margin:0 0 7px}
+.regions{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--sub);transition:background .15s,color .15s,border-color .15s}
+.chip b{font-weight:600;color:var(--mute);margin-left:4px;font-size:12px}
+.chip:hover{border-color:var(--green)}
+.chip[aria-pressed=true]{background:var(--green);border-color:var(--green);color:#fff}
+.chip[aria-pressed=true] b{color:#bfe0d0}
+.cats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cat{text-align:left;border:1px solid var(--line);background:#fff;border-radius:8px;padding:10px 11px 9px;display:flex;flex-direction:column;gap:2px;position:relative;transition:border-color .15s,background .15s}
+.cat span{font-size:14px;font-weight:700;letter-spacing:-.02em}
+.cat em{font-style:normal;font-size:12px;color:var(--mute);font-weight:600}
+.cat:hover{border-color:var(--green)}
+.cat[aria-pressed=true]{background:var(--green-t);border-color:var(--green);box-shadow:inset 0 -4px 0 var(--sun)}
+.cat[aria-pressed=true] span{color:var(--green-d)}
+.meta{flex:none;display:flex;justify-content:space-between;align-items:center;padding:10px 18px 6px;font-size:13px;color:var(--sub);font-weight:600}
+.meta button{border:0;background:none;color:var(--green);font-weight:700;font-size:13px;padding:2px 0;text-decoration:underline;text-underline-offset:3px}
+.list{flex:1;min-height:0;overflow-y:auto;padding:4px 14px 28px;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth}
 
-    .status-bar {
-      padding: 10px 18px; background: #fbfbfc; border-bottom: 1px solid var(--border);
-      display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-muted); flex-shrink: 0;
-    }
-    .status-bar strong { color: var(--primary); font-weight: 700; font-size: 13px; }
+/* card */
+.card{flex:none;background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.card.open{border-color:var(--green);box-shadow:-4px 0 0 var(--sun)}
+.head{width:100%;text-align:left;background:none;border:0;padding:12px 14px;display:block}
+.head:hover{background:#f8faf9}
+.row1{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.nm{font-size:16px;font-weight:800;letter-spacing:-.025em}
+.loc{font-size:12px;color:var(--mute);font-weight:600;white-space:nowrap}
+.sig{margin:3px 0 0;font-size:13px;color:var(--sub);display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.card.open .sig{-webkit-line-clamp:unset;display:block}
+.tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.tag{font-size:11.5px;font-weight:700;color:var(--green-d);background:var(--green-t);border-radius:4px;padding:2px 7px}
+.more{display:grid;grid-template-rows:0fr;transition:grid-template-rows .25s ease}
+.card.open .more{grid-template-rows:1fr}
+.more>div{overflow:hidden}
+.detail{padding:2px 14px 14px;border-top:1px dashed var(--line);margin:0 0 0}
+.detail dl{margin:10px 0 0}
+.detail dt{font-size:12px;font-weight:700;color:var(--green);margin:11px 0 2px}
+.detail dd{margin:0;font-size:14px;line-height:1.6;color:var(--ink);word-break:keep-all;overflow-wrap:anywhere}
+.acts{display:flex;gap:8px;margin-top:14px}
+.acts a{flex:1;text-align:center;text-decoration:none;font-size:13px;font-weight:700;padding:9px 8px;border-radius:6px;border:1px solid var(--green);color:var(--green)}
+.acts a.pri{background:var(--green);color:#fff}
+.acts a:hover{background:var(--green-d);color:#fff;border-color:var(--green-d)}
+.by{margin:12px 0 0;font-size:12.5px;color:var(--mute)}
+.empty{margin:40px 10px;text-align:center;color:var(--sub);font-size:14px;line-height:1.7}
+.empty button{margin-top:8px;border:1px solid var(--green);background:#fff;color:var(--green);font-weight:700;border-radius:6px;padding:8px 14px}
 
-    .card-list { flex: 1; overflow-y: auto; padding: 12px 16px 80px; display: flex; flex-direction: column; gap: 12px; background: var(--bg); scroll-behavior: smooth; }
-    .card {
-      background: #fff; border: 1.5px solid var(--border); border-radius: 12px; padding: 16px; cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); position: relative;
-    }
-    .card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,43,73,0.08); border-color: #cbd5e1; }
-    .card.selected { border-color: var(--primary-light); box-shadow: 0 0 0 2px rgba(0,77,128,0.25); background: #fcfdfd; }
-    .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; gap: 6px; }
-    .card-title { font-size: 16.5px; font-weight: 700; color: var(--text-main); }
-    .card-recommender { background: #e8f3fc; color: #0c66e4; font-size: 11px; font-weight: 700; padding: 3px 7px; border-radius: 5px; white-space: nowrap; }
-    .card-location { display: inline-block; font-size: 12px; font-weight: 600; color: var(--primary-light); background: #f0f4f8; padding: 2px 7px; border-radius: 4px; margin-bottom: 8px; }
-    .card-desc {
-      font-size: 13px; line-height: 1.5; color: var(--text-sub);
-      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 10px;
-    }
-    .card-footer { padding-top: 10px; border-top: 1px dashed var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: var(--text-muted); }
-    .card-footer .menu-preview { max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .card-footer .more-btn { color: var(--primary); font-weight: 700; }
+/* map */
+.mapwrap{position:relative;min-height:0}
+#map{position:absolute;inset:0;background:#e6ebe8}
+.note{position:absolute;z-index:5;left:50%;top:14px;transform:translateX(-50%);background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600;color:var(--sub);box-shadow:0 2px 8px rgba(0,0,0,.12);max-width:90%;text-align:center}
+.note.err{background:#fff7e0;border-color:var(--sun);color:#5b4500;border-radius:10px}
+.note[hidden]{display:none}
 
-    .map-container { flex: 1; height: 100%; position: relative; background: #f1f5f9; }
-    #map { height: 100%; width: 100%; }
-    .map-error {
-      position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
-      text-align: center; padding: 24px; color: var(--text-sub); font-size: 14px; line-height: 1.7; background: #f1f5f9; z-index: 5;
-    }
+/* map pins (restaurant name) */
+.pin{position:relative;transform:translateY(-8px);cursor:pointer;display:flex;flex-direction:column;align-items:center}
+.pin span{background:var(--green);color:#fff;font-size:12.5px;font-weight:700;padding:4px 9px;border-radius:5px;white-space:nowrap;border:1.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35);letter-spacing:-.02em}
+.pin i{width:0;height:0;border:6px solid transparent;border-top-color:var(--green);border-bottom:0;margin-top:-1px}
+.pin.sel span{background:var(--sun);color:#1a1400;border-color:#1a1400;font-size:13.5px}
+.pin.sel i{border-top-color:#1a1400}
+.far .pin:not(.sel) span{font-size:0;padding:0;width:11px;height:11px;border-radius:50%;border-width:2px}
+.far .pin:not(.sel) i{display:none}
+.far .pin:not(.sel):hover span{font-size:12.5px;padding:4px 9px;width:auto;height:auto;border-radius:5px;border-width:1.5px}
 
-    .k-pin {
-      background: #002b49; color: #fff; border: 2px solid #fff; border-radius: 50%;
-      width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
-      font-size: 11.5px; font-weight: 800; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer;
-      transition: transform 0.15s ease, background 0.15s ease;
-    }
-    .k-pin:hover, .k-pin.active { background: #e02424; transform: scale(1.25); }
-
-    .k-popup {
-      position: relative; bottom: 45px; border-radius: 12px; background: #fff; padding: 12px 14px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.22); min-width: 230px; max-width: 280px;
-    }
-    .k-popup::after {
-      content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%);
-      border-width: 8px 8px 0; border-style: solid; border-color: #fff transparent; display: block; width: 0;
-    }
-    .k-popup-title { font-size: 15px; font-weight: 800; color: #002b49; margin-bottom: 2px; }
-    .k-popup-sub { font-size: 11.5px; color: #8b95a1; margin-bottom: 8px; }
-    .k-popup-menu { font-size: 12px; color: #4e5968; background: #f8fafc; padding: 6px 8px; border-radius: 6px; margin-bottom: 8px; line-height: 1.4; }
-    .k-popup-btn {
-      width: 100%; background: #fee500; color: #191600; font-size: 11.5px; font-weight: 800;
-      padding: 7px 0; border-radius: 6px; border: none; cursor: pointer; text-align: center; display: block;
-    }
-
-    .modal-backdrop {
-      display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px);
-      z-index: 9999; align-items: center; justify-content: center; padding: 16px;
-    }
-    .modal-backdrop.open { display: flex; }
-    .modal-panel {
-      background: #fff; border-radius: 20px; width: 100%; max-width: 540px; max-height: 90vh;
-      display: flex; flex-direction: column; position: relative; box-shadow: 0 24px 48px rgba(0,0,0,0.2); overflow: hidden;
-    }
-    .modal-header { padding: 22px 22px 14px; border-bottom: 1px solid var(--border); position: relative; }
-    .modal-close-btn {
-      position: absolute; top: 18px; right: 18px; background: #f1f3f5; border: none; width: 32px; height: 32px;
-      border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; color: #495057;
-    }
-    .modal-title { font-size: 22px; font-weight: 800; color: var(--primary); }
-    .modal-meta { margin-top: 4px; font-size: 12.5px; color: var(--text-muted); display: flex; gap: 6px; }
-    .modal-meta span.author { color: #0c66e4; font-weight: 700; }
-    .modal-body { padding: 18px 22px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
-    .info-block { background: #f8fafc; border-radius: 10px; padding: 12px 14px; border: 1px solid var(--border); }
-    .info-block-label { font-size: 11.5px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; }
-    .info-block-content { font-size: 13.5px; line-height: 1.55; color: var(--text-main); white-space: pre-wrap; }
-    .map-btn-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 14px 22px 20px; border-top: 1px solid var(--border); background: #fff; }
-    .map-btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 0; border-radius: 8px; font-size: 12px; font-weight: 700; text-decoration: none; }
-    .btn-kakao { background-color: #fee500; color: #191600; }
-    .btn-naver { background-color: #03c75a; color: #fff; }
-    .btn-google { background-color: #1a73e8; color: #fff; }
-
-    @media (max-width: 768px) {
-      .app-layout { flex-direction: column-reverse; }
-      .sidebar { width: 100%; min-width: 0; height: 55%; }
-      .map-container { height: 45%; flex: none; }
-    }
-  </style>
+@media (max-width:820px){
+  header{padding:11px 16px 12px}
+  header h1{font-size:21px}
+  header p{font-size:12.5px}
+  main{grid-template-columns:1fr;grid-template-rows:38% 1fr}
+  .mapwrap{order:-1}
+  .panel{border-right:0;border-top:1px solid var(--line);overflow-y:auto}
+  .list{flex:none;overflow:visible}
+  .cats{grid-template-columns:repeat(3,1fr);gap:6px}
+  .cat{padding:8px 9px 7px}
+  .cat span{font-size:13px}
+}
+@media (prefers-reduced-motion:reduce){.more,.list{transition:none;scroll-behavior:auto}}
+</style>
 </head>
 <body>
-
-  <div class="app-layout">
-    <aside class="sidebar">
-      <div class="header">
-        <div class="badge">🍽️ 2026 현대건설 사내 캠페인</div>
-        <h1>현건슐랭 맛지도 (카카오맵)</h1>
-        <p>임직원 150명이 직접 검증한 전국 맛집 아카이브</p>
-      </div>
-
-      <div class="filter-section">
-        <div class="region-tabs" id="regionTabs">
-          <button class="tab-btn active" data-region="전체">전체 (150)</button>
-          <button class="tab-btn" data-region="서울">서울</button>
-          <button class="tab-btn" data-region="경기·인천">경기·인천</button>
-          <button class="tab-btn" data-region="충청·대전">충청·대전</button>
-          <button class="tab-btn" data-region="강원">강원</button>
-          <button class="tab-btn" data-region="영남">영남</button>
-          <button class="tab-btn" data-region="호남">호남</button>
-          <button class="tab-btn" data-region="제주">제주</button>
-        </div>
-
-        <div class="search-row">
-          <div class="search-box">
-            <svg viewBox="0 0 24 24" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input type="text" id="inputName" placeholder="맛집명 검색 (예: 한서방, 태화루)">
-          </div>
-          <div class="search-box">
-            <svg viewBox="0 0 24 24" stroke-width="2"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-            <input type="text" id="inputLoc" placeholder="시군구 검색 (예: 종로구, 해운대)">
-          </div>
-        </div>
-      </div>
-
-      <div class="status-bar">
-        <div>식당 <strong id="resCount">150</strong>곳</div>
-        <div>* 카드를 누르면 카카오맵 위치로 이동합니다</div>
-      </div>
-
-      <div class="card-list" id="cardList"></div>
-    </aside>
-
-    <main class="map-container">
-      <div id="map"></div>
-      <div class="map-error" id="mapError"></div>
-    </main>
-  </div>
-
-  <div class="modal-backdrop" id="modalBackdrop">
-    <div class="modal-panel" role="dialog" aria-modal="true">
-      <div class="modal-header">
-        <button class="modal-close-btn" onclick="closeModal()" aria-label="닫기">&times;</button>
-        <div class="modal-title" id="mName">식당명</div>
-        <div class="modal-meta">
-          <span id="mRegionLoc">지역 · 시군구</span>
-          <span>•</span>
-          <span>추천인: <span class="author" id="mAuthor">-</span></span>
-        </div>
-      </div>
-      <div class="modal-body">
-        <div class="info-block"><div class="info-block-label">📍 식당 위치 / 주소</div><div class="info-block-content" id="mAddr"></div></div>
-        <div class="info-block"><div class="info-block-label">⭐ 대표 추천 메뉴</div><div class="info-block-content" id="mMenu"></div></div>
-        <div class="info-block"><div class="info-block-label">💡 방문 팁 (웨이팅 / 주차 등)</div><div class="info-block-content" id="mTips"></div></div>
-        <div class="info-block"><div class="info-block-label">📝 식당과의 인연 & 추천 사유</div><div class="info-block-content" id="mDesc"></div></div>
-      </div>
-      <div class="map-btn-group">
-        <a id="btnKakao" target="_blank" rel="noopener" class="map-btn btn-kakao">카카오맵</a>
-        <a id="btnNaver" target="_blank" rel="noopener" class="map-btn btn-naver">네이버지도</a>
-        <a id="btnGoogle" target="_blank" rel="noopener" class="map-btn btn-google">구글지도</a>
-      </div>
+<header>
+  <h1>현건슐랭 맛지도</h1>
+  <p>현대건설 임직원이 직접 검증한 전국 맛집</p>
+</header>
+<main>
+  <section class="panel" aria-label="맛집 목록">
+    <div class="filters">
+      <p class="flabel">지역</p>
+      <div class="regions" id="regions"></div>
+      <p class="flabel">추천 순간</p>
+      <div class="cats" id="cats"></div>
     </div>
-  </div>
+    <div class="meta"><span id="count"></span><button id="reset" type="button" hidden>필터 해제</button></div>
+    <div class="list" id="list"></div>
+  </section>
+  <section class="mapwrap" aria-label="지도">
+    <div id="map"></div>
+    <div class="note" id="note" hidden></div>
+  </section>
+</main>
 
-  <script>
-    // ============================================================
-    // 1) 카카오 JavaScript 키 (REST API 키 아님!)
-    // ============================================================
-    const KAKAO_JS_KEY = "5b64fcf65bb1ceaf33f89229033087d2";
+<script>
+/* ▼ 카카오 개발자 콘솔에서 발급받은 JavaScript 키를 넣어주세요 (플랫폼에 사이트 도메인 등록 필요) */
+const KAKAO_KEY = "여기에_카카오_JavaScript_키";
 
-    // ============================================================
-    // 2) 데이터: 기존 파일의 `const DATA = [ ... ];` 한 줄을 통째로 아래에 붙여넣기
-    // ============================================================
-    const DATA = [{"id": 1, "name": "노형자연산횟집", "region": "제주", "sigungu": "제주시", "address": "제주시 노형동 2526-2", "recommender": "홍승모", "desc": "제주도에 여행와서, 바가지 쓰지 않고 진정한 자연산 회를  저렴하게 먹고 싶을때.(시내에 있어 바다는 보이지 않습니다. 제주도민들이 좋아하는 횟집 | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n제주신화월드 현장 근무시, 집근처(제주시, 공항근처) 동네 횟집입니다.", "menu": "그날 잡은 제주산 자연산 회, 양식은 취급하지 않습니다. 인당 3~4만원 정도.  육지의 횟집처럼 화려한 밑반찬이 나오는 집은 아닙니다. 하지만 나오는 몇가지 밑반찬은 모두 맛있습니다. 마지막에 나오는 자연산 생선구이와, 매운탕이 일품입니다.", "tips": "반드시 방문 전에 전화하세요. \"오늘 물고기 있나요?\" 그날 날씨에 따라(덥거나, 비오거나) 자연산 횟감이 없을 수 있습니다. 예약시 현대건설 직원이라고 말씀드리면 잘해주실 겁니다.", "lat": 33.500715, "lng": 126.5274}, {"id": 2, "name": "옹심이 칼국", "region": "영남", "sigungu": "울진군", "address": "경북 울진군 북면 덕구온천로 678", "recommender": "박효수", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n고향", "menu": "옹심이 칼국수, 파전, 막걸리 등 모두 맛있는데요. 그중에서도 무채와 곁들여 먹는 파전 꼭 추천드립니다.", "tips": "특별한 팁은 없어요. 시골이라 사람 많으면 그냥 기다리세요. 기다린 보람이 있으실거에요.", "lat": 36.9912, "lng": 129.398086}, {"id": 3, "name": "돌바우횟집", "region": "강원", "sigungu": "양양군", "address": "강원도 양양군 매바위길 51", "recommender": "윤규섭", "desc": "동해안 여행 중 \"소박하게 먹을 수 있는\", \"믿을 수 있는\" 자연산 횟집\n강원도 출장 중 양양 해안도로를 따라 이동 중 우연히 들린 자연산 횟집", "menu": "자연모듬회(그 전날 낚시로 잡은 회로 메뉴가 구성됨). 중자만 먹어도 4명이 배가 부릅니다....", "tips": "6팀정도만 예약을 받아 사전에 연락 필수. 주인분께서 써빙할 수 있는 여력까지만 예약을 받아 음식의 퀄러티와 서비스가 굿!! 주차는 식당 앞 뿐만 넓은 해안가 공영주차장이 다~", "lat": 38.077292, "lng": 128.620314}, {"id": 4, "name": "피어커피 성", "region": "서울", "sigungu": "성동구", "address": "서울 성동구 광나루로4가길 24, 1층", "recommender": "박현", "desc": "내가 더 이상 젊지 않다고 느껴지거나 힙해지고 싶을 때\n힙하고 핫한 성수지역", "menu": "아몬드 크로아상과 함께 먹는 플랫화이트", "tips": "차분한 분위기를 좋아하신다면 조금 일찍 움직이시면 좋아요. 오후가 될 수록 사람들이 많아 집니다.", "lat": 37.566437, "lng": 127.033796}, {"id": 5, "name": "뜰이있는집", "region": "충청·대전", "sigungu": "제천시", "address": "충북 제천시 하소천길 176", "recommender": "안영탁", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n직장동료 추천 (충북 단양 휴양소 부근 맛집)", "menu": "해물 모둠장, 보리굴비", "tips": "예약 필수, 웨이팅 비추천", "lat": 37.131975, "lng": 128.210338}, {"id": 6, "name": "진미막국수", "region": "강원", "sigungu": "속초시", "address": "강원 속초시 설악금강대교로 46-1", "recommender": "권계환", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n지인의 소개", "menu": "동치미막국수", "tips": "15:00~16:30 브레이크 타임", "lat": 37.201349, "lng": 128.591943}, {"id": 7, "name": "감포생밀", "region": "영남", "sigungu": "대구", "address": "대구 북구 침산남로7길 2-1 감포생밀복", "recommender": "이승일", "desc": "출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\nHS 달성공원역 출장", "menu": "밀복지리", "tips": "정보 없음", "lat": 35.867612, "lng": 128.598991}, {"id": 8, "name": "군산 한일옥", "region": "호남", "sigungu": "군산시", "address": "전북특별자치도 군산시 구영3길 63 1층", "recommender": "김준형", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n고향입니다.", "menu": "무우국, 육회비빔밥(육회비빔밥은 소 잡는 날인  평일에만 주문이 가능)", "tips": "주말, 식사 피크시간대에는 웨이팅, 매장 앞 주차 가능(만차일 시 인근 공영주차장 이용), 바로 맞은 편에 영화 8월의 크리스마스 촬영지인 초원사진관 있어 식사 전후 둘러보기 좋음", "lat": 35.968799, "lng": 126.73696}, {"id": 9, "name": "한남동 정민", "region": "서울", "sigungu": "강서구", "address": "서울 강서구 마곡동로10길 23 대방디엠시티오피스텔2차 1층 104호", "recommender": "강철호", "desc": "전날 마신 술이 싹 내려가는 ‘해장 종결지’\n현장 근처 우연히 지나가다 \"짜장면, 소주 없음\" 이라는 문구가 특이하여 발견.", "menu": "해물짬뽕이 단연 1등!! 우육면도 독특한 풍미와 함께 베리굿!!!", "tips": "규모가 작아서 4명이상은 불가합니다. 정말 소주 안팔고 연태고량주만 팔아요. 15~17:30 브레이크 타입 있습니다.", "lat": 37.548664, "lng": 126.850214}, {"id": 10, "name": "리애", "region": "서울", "sigungu": "강남구", "address": "강남구 선릉로16길 6", "recommender": "송경훈", "desc": "출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n동내 맛집 우연히 알게됨", "menu": "숙성된 돈까스의 부드러운 맛  로스까스, 히래까스", "tips": "점심시간시 웨이팅 발생 오픈런 또는 점심시간 이후 방문 추천, 주차는 불가능", "lat": 37.519675, "lng": 127.043352}, {"id": 11, "name": "염포오리탕", "region": "영남", "sigungu": "북구", "address": "울산 북구 방어진순환도로 1393 1층", "recommender": "한성협", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’\n고향이기도 하고 울산 H-DOCK 현장의 동기와의 만남 및 울산신항 남방파제 시절에도 방문한 맛집.  30년 이상 됨.", "menu": "오리탕 단일 메뉴, 볶음밥은 꼭 드세요.", "tips": "매주 일요일 휴무, 조금 자극적일 수도 있지만 맛있고 순살도 선택 가능합니다.", "lat": 35.540847, "lng": 129.312985}, {"id": 12, "name": "장어집 본점", "region": "서울", "sigungu": "강동구", "address": "서울 강동구 가래여울2길 33", "recommender": "김현태", "desc": "몸이 허할때 기력 보충 | 명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n부모님 소개로 알게 됨, 가족모임/건강회복 에 최적의 장소", "menu": "대물장어를 합리적 가격에 질좋은 채소(직접 제배)와 함께 즐길수 있음", "tips": "예약 필수, 도보 이용 불가, 첫방문시 진입로 유의 (잘못들어가면 올림픽대로)", "lat": 37.528822, "lng": 127.121044}, {"id": 13, "name": "팔복황제누룽지탕 분당직영점", "region": "경기·인천", "sigungu": "성남시", "address": "경기 성남시 분당구 구미로192번길 4 1층", "recommender": "임창근", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n거주지 근처 맛집", "menu": "해물 누룽지탕", "tips": "점심에는 웨이팅이 꽤 있고, 저녁에는 크게 웨이팅이 없습니다. 식당가가 모여있어서 주차는 쉽습니다.", "lat": 37.423758, "lng": 127.125193}, {"id": 14, "name": "북한강돌짜장", "region": "경기·인천", "sigungu": "남양주시", "address": "경기도 남양주시 화도읍 북한강로1112번길 6", "recommender": "우승우", "desc": "바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’\n해비치cc 출장 중", "menu": "돌짜장", "tips": "여러명이 함께 가서 돌짜장과 갈비찜을 같이 드세요.", "lat": 37.632742, "lng": 127.213274}, {"id": 15, "name": "완도머스", "region": "충청·대전", "sigungu": "대전광역시", "address": "대전광역시 유성구 신성로 103", "recommender": "박창범", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’ | 명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n선박해양플랜트연구소 출장 중 방문", "menu": "굴전복국밥 + 문어숙회", "tips": "점심시간보다 약간 일찍 혹은 약간 늦게 가시면 좋습니다.", "lat": 36.35318, "lng": 127.38533}, {"id": 16, "name": "그집순대국", "region": "경기·인천", "sigungu": "동두천시", "address": "경기 동두천시 장고갯로 157 제1동(생연동)", "recommender": "이수영", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’\n동두천 지역 주민", "menu": "뽈살순대국", "tips": "건물 뒷쪽 주차장 넓어서 편해요.", "lat": 37.906057, "lng": 127.062538}, {"id": 17, "name": "여의도양지탕본관", "region": "서울", "sigungu": "영등포구", "address": "서울 영등포구 국회대로70길 7", "recommender": "이규헌", "desc": "땀 흘린 후에 찾아가는 맛집\n아내와 서울둘레길14코스(약 2시간 반)를 걷고 집으로 돌아가는 길, 버스 환승하는 곳에서 배가 고파 음식점을 찾다가 무작정 들어간 집입니다. 이제는 이거 먹으려고 둘레길을 가요~", "menu": "양지탕에 마나라는 특수부위가 들어가는데 호불호가 있겠지만 저는 완전 호입니다. (귀한 부위)", "tips": "저는 주말에 둘레길 한코스 걷고 집에 돌아가는 길에 들르는 집이라 다른 시간대는 잘 모르겠네요. 여의도라서 점심엔 사람이 많을 것 같습니다.", "lat": 37.52669, "lng": 126.899985}, {"id": 18, "name": "청우고깃간 정육식당", "region": "호남", "sigungu": "순천시", "address": "전남광주 순천시 중앙초등길 165 1층(순천역 인근)", "recommender": "이용석", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n율촌산단 근무 시 아는 공무원이 추천해줌 / 준공 즈음 알게 되어 현장을 떠나기 전 세번 밖에 못 먹고 온게 한으로 남아 있음", "menu": "안심 구이", "tips": "한적한 시간에 방문하여 꼭 사장님이 직접 구워주는 안심 구이를 먹어야 함.", "lat": 35.158528, "lng": 126.853016}, {"id": 19, "name": "마포주물럭", "region": "서울", "sigungu": "동대문구", "address": "서울 동대문구 고산자로34길 11", "recommender": "김권수", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\nHS 청량리 메트로블 현장 출구 앞 2M에 위치 (완공된 지금도 바로 앞에 위치) / 숨겨진 한우 주물럭 노포 맛집입니다", "menu": "한우 주물럭, 한우 육회", "tips": "주차는 어렵습니다, 노포 맛집 애용자들에게 추천하고 싶습니다", "lat": 37.577035, "lng": 127.040948}, {"id": 20, "name": "양반수제비", "region": "충청·대전", "sigungu": "서구", "address": "대전 서구 문정로90번길 21", "recommender": "이연우", "desc": "빠르고 맛있게 별미로 먹는 점심 맛집\n힐스테이트 둔산 현장", "menu": "순한수제비와(꼭 얼큰수제비 말고 순한 수제비 먹어야 함) 감자채전", "tips": "주차는 주변 골목에 해야 함. 방문한 김에 주변의 대전 명물 성심당을 롯데백화점에 가서 방문 가능 ~!", "lat": 37.547894, "lng": 126.676619}, {"id": 21, "name": "검단 두손칼국수", "region": "경기·인천", "sigungu": "검단구", "address": "인천 검단구 원당대로 99 .현빌딩 103호", "recommender": "고현석", "desc": "깔끔한 칼국수? 든든한 보쌈? 그냥 둘 다 먹어!\n하나드림타운그룹헤드쿼터신축현장 근무시 발견!", "menu": "단일메뉴 - 칼국수", "tips": "영업시간이 오전11시~오후1시, 즉 2시간만 영업합니다. 웨이팅 당연히 있지만 회전율이 매우 빠릅니다. ㅎㅎ 주차는 인근 도로가에 세웁니다. 대기명단에 이름/인원수만 적으면 됩니다. 자리에 앉자마자 칼국수와 보쌈메뉴가 나옵니다.  흑미밥은 셀프코너에서 양껏 드시면 됩니다. 이 모든것이 1인 7000원! ㅎㅎ", "lat": 37.457937, "lng": 126.701567}, {"id": 22, "name": "방화동 교동짬뽕", "region": "서울", "sigungu": "강서구", "address": "서울 강서구 금낭화로24나길 21 이루미팰리스 101호", "recommender": "주현수", "desc": "전날 마신 술이 싹 내려가는 ‘해장 종결지’\n와이프와 매운짬뽕 매니아라 여기저기 돌며 찾아내었어요!", "menu": "불짬뽕! 찹쌀탕수육도 너무 맛있으니 꼭 같이 드셔보세요.", "tips": "11시 오픈런 미리 해야 안 기다리고 먹을 수 있어요! 주차는 주변 골목에!", "lat": 37.548723, "lng": 126.847815}, {"id": 23, "name": "처인성토속음식", "region": "경기·인천", "sigungu": "용인시", "address": "경기 용인시 처인구 남사읍 처인성로827번길 116-3", "recommender": "김민준", "desc": "출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n힐스테이트 용인마크밸리 현장 근처에 있고, 주변에 가족끼리 놀러가는 길에 들려서 맛있게 먹었습니다(허영만 백반기행 촬영지)", "menu": "묵은지생갈비전골", "tips": "월요일은 휴무 입니다.", "lat": 37.237738, "lng": 127.175462}, {"id": 24, "name": "체나레인서촌", "region": "서울", "sigungu": "종로구", "address": "서울 종로구 자하문로7길 76 1층", "recommender": "이승준", "desc": "정통 이탈리안 음식이 먹고싶을때 또는 가족 및 지인과의 품격있는 오붓한 식사장소로 추천합니다.\n평소 이탈리안 음식을 좋아하던 중 지인의 소개로 알게 되었습니다. 주머니속에 넣고 다니는 든든한 히든카드 ^^", "menu": "블랙뽈뽀, 스콜리오, 트로플뇨끼, 보테르가, 봉골레 등 다 맛있습니다.", "tips": "이른 저녁시간 해질력 또는 저녁 시간 이후 와인한잔과 간단한 식사에 어울리는 곳입니다. 주차는 인근 공영주차장 이용 가능하더라고요", "lat": 37.569708, "lng": 126.977524}, {"id": 25, "name": "군위식당", "region": "서울", "sigungu": "대구시", "address": "대구시 중구 경상감영길 101 1층", "recommender": "이우현", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’ | 눈치 안 보고 편하게 먹는 ‘혼밥/혼술 명당’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’\nHS대구역, HS도원센트럴, HS동인센트럴, HS대구역오페라 등 주변 현장 중심에 있음. 성시경먹을텐데 및 싸이방문으로 더 유명해짐.", "menu": "돼지국밥 과 수육", "tips": "감영공원 주차 가능.", "lat": 37.564685, "lng": 126.996419}, {"id": 26, "name": "간이횟집", "region": "서울", "sigungu": "송파구", "address": "서울 송파구 백제고분로7길 52 1층", "recommender": "채영호", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’\n집근처 맛집", "menu": "광어+우럭", "tips": "횟감 아래에 무채를 깻잎쌈에 듬뿍 올려 특제 장과 함께 먹습니다.", "lat": 37.513461, "lng": 127.104276}, {"id": 27, "name": "유진", "region": "호남", "sigungu": "담양군", "address": "전남광주 담양군 금성면 시암골로 17", "recommender": "성윤호", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n부모님과 어릴때부터 다녔던 곳", "menu": "메뉴는 청둥오리전골 단일메뉴로 인원수에 맞게 양만 정하면 됩니다. 일반 오리가 아닌 식용청둥오리로 처음에는 국물이 끓으면 같이 주문 야채를 숨만 죽여서 소스(식당소시+들깨가루)를 찍어서 야채 먼저 먹고 있으면 고기가 익습니다. 그러면 익은 고기와 함께 야채와 같이 드시고 나서 국물은 밥과 함께 적셔서(또는 말아서) 같이 드시면 정말 보양식으로 최고입니다. 또한 고기를 다 드시고 나면 국물에 쑥을 넣어주시는데 그 후에 국물은 아예 다른 맛으로 변해서 진하고 맛있는 국물이 됩니다.", "tips": "주말에는 웨이팅이 많아서 가능한 오픈런 하시구요~평일에도 조금 일찍 가시는걸 추천드립니다. 주차장은 넓어서 크게 문제가 없고 어르신들이 대부분이시라는건 정확히 맛집이겠죠?^^", "lat": 35.157636, "lng": 126.856093}, {"id": 28, "name": "우판사판", "region": "경기·인천", "sigungu": "고양시", "address": "경기도 고양시 덕양구 은빛로29번길 8 (화정동 929-2)", "recommender": "김덕기", "desc": "미취학 아이가 좋아할 만한 맛있는 소양념 갈비집\n처가집 고향으로 아이가 좋아하는 맛집", "menu": "소양념 갈비 + 냉면", "tips": "식사시간이 아님에도 불구하고 웨이팅이 있을 맛집. 경기도 화정역 3번출구에서 도보 약 5분 거리", "lat": 37.659584, "lng": 126.832873}, {"id": 29, "name": "부영도가니탕", "region": "서울", "sigungu": "종로구", "address": "서울 종로구 북촌로 141", "recommender": "김대왕", "desc": "바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’\n점심시간에 아내가 아이들과 오면 항상 같이 가는 식당입니다. 아이들이 먹을 수 있는 회사 근처 곰탕집을 알아보다가 알게된 집인데 남녀노소 모두다 좋아할만한 메뉴에 바로 앞 공영주차장과 삼청공원이 있어 이용하기 편라합니다.", "menu": "도가니탕", "tips": "아이들꺼는 안시켜도 따로 한그릇 더 줍니다", "lat": 37.570269, "lng": 126.981133}, {"id": 30, "name": "청아가든", "region": "영남", "sigungu": "울진군", "address": "경북 울진군 북면 맞덕구길 2", "recommender": "정연재", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n신한울 원자력 3,4호기 건설현장 맛집", "menu": "오리능이한방백숙, 모든 반찬 맛집", "tips": "덕구온천 인근으로 식당 셔틀이용 가능", "lat": 36.990307, "lng": 129.399336}, {"id": 31, "name": "상아식", "region": "호남", "sigungu": "여수시", "address": "전남광주 여수시 어항단지로 21", "recommender": "임현수", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n처가집에서 가까워서 명절 연휴에는 가족들과 꼭 방문하는 식당", "menu": "원조통장어탕", "tips": "주차는 인근  엑스포해수피아 주차장에 가능함, 항상 손님이 많습니다.", "lat": 35.163416, "lng": 126.85372}, {"id": 32, "name": "효자문 식당", "region": "호남", "sigungu": "전주시", "address": "전북 전주시 완산구 전주객사4길 43-24 효자문", "recommender": "강은비", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’ | 명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n고향 맛집!", "menu": "불갈비를 시키면 반갈비탕이 후식으로 나옵니다! 무조건 불갈비를 시키세요! 불이라고 해서 매울 거 같지만 사실 아주 달달해서 애기들도 먹기 좋답니다! 꿀꺽 + 주차 자리도 있어요.", "tips": "주차 자리도 있으니 걱정말고 가십쇼~~~", "lat": 35.824656, "lng": 127.149477}, {"id": 33, "name": "황생가칼국수", "region": "서울", "sigungu": "78", "address": "북촌로5길 78", "recommender": "민환석", "desc": "눈치 안 보고 편하게 먹는 ‘혼밥/혼술 명당’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’\n본사주변", "menu": "칼국수,콩국수,만두,보쌈", "tips": "11시반 땡 하자마자 가면 30분정도 웨이팅", "lat": 37.569243, "lng": 126.980208}, {"id": 34, "name": "감나무집", "region": "영남", "sigungu": "부산광역시", "address": "부산광역시 금정구 범어사로 334", "recommender": "이광연", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n고향인 부산의 로컬 맛집으로, 적어도 20년 이상 온가족이 함께 즐겨온 식당임", "menu": "오리불고기 전문점. 소금 -> 양념 순으로 주문 추천. 대표 메뉴는 양념으로, 부추를 산더미 같이 올린 후 숨을 죽여 오리고기와 함께 먹으면 씹는 맛이 일품임.", "tips": "부산의 대표 관광지 중 하나인 범어사 바로 앞에 있으며, 바로 근처에 경치 좋은 멋진 카페도 많이 있어 범어사 관광 → 감나무집 → 카페 코스를 추천.", "lat": 35.177432, "lng": 129.071857}, {"id": 35, "name": "할머니추어탕 신월2호점", "region": "서울", "sigungu": "양천구", "address": "서울 양천구 가로공원로 146", "recommender": "이영준", "desc": "바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n대장~홍대 광역철도 1공구 현장품질업무 지원 출장 갔다가 점심시간에 품질직원분들과 해당 추어탕집을 갔습니다. 그런데 알고보니 같이 간 출장자의 맛집이면서 현장의 안전직원분들도 맛있다고 한 집이었네요.", "menu": "추어탕", "tips": "점심시간에 사람이 많으니 조금 일찍가야되고, 늦으면 주차하기가 조금 어려울 수도 있습니다. 인근 주택가 골목이 협소한 편이긴 한데 주차 안내해주시는 분이 계십니다.", "lat": 37.515424, "lng": 126.864642}, {"id": 36, "name": "백로식당 본점", "region": "충청·대전", "sigungu": "청주시", "address": "청주시 성안로 47-1 1층", "recommender": "김용석", "desc": "출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n고향", "menu": "돼지고기 양념구이 (단일메뉴) 먹고 볶음밥 필수", "tips": "청주 내 체인점이 있으나, 무조건 본점 추천", "lat": 36.640088, "lng": 127.492543}, {"id": 37, "name": "우솔", "region": "서울", "sigungu": "종로구", "address": "서울 종로구 율곡로5길 14", "recommender": "이정욱", "desc": "출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n회식을 위해 맛있는 집을 찾다가 찾다가 찾다가 진짜 찾다가 겨우 찾은 맛집입니다.", "menu": "모듬코스 + 짜파게티, (1인분에 150g)이라고 되어있지만 고기를 계속 주셔서 150g 1인분이면 충분한 맛집", "tips": "인원이 많으면 힘든데 12명 정도면 전체대관을 해줘요!", "lat": 37.575911, "lng": 126.977817}, {"id": 38, "name": "고을식당", "region": "제주", "sigungu": "서귀포시", "address": "제주도 서귀포시 대정읍 인성리 251-1(일주서로 2258)", "recommender": "신정무", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n제주신화월드 워터파크 근무 당시에 즐겨 찾던 고기국수+돔베고기 맛집입니다. 제주도 현지인분들께서는 멸치국물 베이스의 고기국수가 오리지날이라고 해요!(설렁탕 베이스 아님) 돌관현장에서 근무하면서 힘들때마다 즐겨찾았던 곳인데, 이제는 제주도 여행갈때마다 가게 되는 맛집이 되었습니다.", "menu": "고기국수+돔베고기", "tips": "주차장이 별도로 있는건 아니어서, 인근 도로가에다가 주차를 해야해요. 그부분만 아니면 너무 좋은 맛집입니다!", "lat": 33.255344, "lng": 126.559265}, {"id": 39, "name": "들렁모루 점심", "region": "제주", "sigungu": "서귀포시", "address": "서귀포시 서홍로358번길 27-18", "recommender": "안재성", "desc": "출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n처가집이 제주도인데 제주도민만 알고 있는 맛집입니다 ^^", "menu": "오리탕", "tips": "정보 없음", "lat": 33.257416, "lng": 126.559771}, {"id": 40, "name": "두남리들기름육회비빔 본점", "region": "충청·대전", "sigungu": "천안시", "address": "충남 천안시 동남구 큰시장길 41, 1층", "recommender": "유제하", "desc": "바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’\n고향", "menu": "들기름육회비빔밥(단일 메뉴임)", "tips": "주차가 매우 불편하니 주변 공영주차장에 주차하고 3~4분 걸어서 가는것을 추천, 점심 시간대에는 자리가 매우 높은 확률로 없으니 12시 이전에 가는 것을 추천, 하루에 정해진 수량만 판매해 오후 3시 이후에는 문 닫을 수 있음", "lat": 36.813219, "lng": 127.111873}, {"id": 41, "name": "한영식당", "region": "서울", "sigungu": "대전광역시", "address": "대전광역시 중구 계룡로874번길 6", "recommender": "이현승", "desc": "호불호 없는 메뉴 \"닭볶음탕\"의 성지로서 맛점+맛저까지 가능한 올라운더 + 블루리본 등재 인정맛집\n대전 지역 현장들을 출장하던 중에 현장에서 추천받아 방문하였습니다.", "menu": "닭볶음탕 ★단일메뉴★ + 볶음밥은 말하지않아도 추가 아니겠습니까!!!", "tips": "일방통행 도로로 보통 가게 앞, 인근에 주차해야하는 주차난이도 \"上\", 하지만 도보 5분이내 서대전네거리역 앞 \"오류동주차장\"이용하면 60분에 3천원!!!!!", "lat": 37.564091, "lng": 126.995602}, {"id": 42, "name": "통나무집", "region": "경기·인천", "sigungu": "과천시", "address": "경기도 과천시 새술막길 38 중앙상가 1층 105호", "recommender": "최호형", "desc": "전날 마신 술이 싹 내려가는 ‘해장 종결지’\n저희 동네 맛집입니다.", "menu": "강력한 화구에서 나오는 얼큰한 부대찌개 강추 / 저녁에는 족발과 함께 먹다가, 부대찌개로 갈아타면 됩니다.", "tips": "일요일 간혹 영업X / 주차는 노상공영주차장 이용", "lat": 37.429877, "lng": 126.990883}, {"id": 43, "name": "인사 안집 본", "region": "서울", "sigungu": "종로구", "address": "서울 종로구 인사동14길 24-1 인사안집", "recommender": "이일규", "desc": "가성비 가심비 뛰어난 한정식 맛집\n본사 인근 인사동", "menu": "옛날 보리밥나물비빔밥과 소불고기 15,000원,  타 식당에서는 두 배 정도의 가격에 가능한 맛과 서비스..", "tips": "2명 이상, 예약 필수, 셀프 채소 바 운용으로 풍족히 맛있게 즐길 수 있는 맛집.", "lat": 37.572095, "lng": 126.977055}, {"id": 44, "name": "애향식당", "region": "경기·인천", "sigungu": "가평군", "address": "경기도 가평군 가평읍 장터길 3-16", "recommender": "장한규", "desc": "눈치 안 보고 편하게 먹는 ‘혼밥/혼술 명당’\n고향", "menu": "여럿이 가면 칼국수/칼만두(바지락, 들깨)+오징어/두루치기 볶음 조합으로, 혼자 가면 잣콩국수(여름), 만두국(상시) 추천", "tips": "주말에 영업을 안하는 경우가 있으니 영업 시간 확인 필요, 특히 가평 5일장(5,10,15,20,25,30)으로 주차 불가능한 경우 발생(가평잣고을 시장주차장)", "lat": 37.83548, "lng": 127.509776}, {"id": 45, "name": "평화식당", "region": "영남", "sigungu": "창원시", "address": "경남 창원시 마산합포구 월영북로 17", "recommender": "이슬기", "desc": "아구찜에 막걸리 한사바리 싸~~앆~~!\n고향", "menu": "생아구찜, 아구불고기 다 맛있음", "tips": "아구찜 주제에 웨이팅 무조건 있을겁니다. 재료 소진도 자주 있으니 방문 전 무조건 전화해보긔~★", "lat": 35.224727, "lng": 128.677477}, {"id": 46, "name": "부암갈비", "region": "경기·인천", "sigungu": "남동구", "address": "인천 남동구 간석동 130-12 (용천로 149)", "recommender": "부지현", "desc": "인천 최고 맛집. . . 인천에 가신다면 추천\n어린 시절 살던 동네 쵝오 맛집 (서울에 살고있는 지금도 종종 갑니다 . . . )", "menu": "생갈비 단일메뉴 인데, 갈치속젓비빔밥을 고기 주문할 때 미리 시키셔야 고기 구워서 나올 때 같이 먹을 수 있어요", "tips": "옛날엔 웨이팅 지옥이었는데. 요즘은 덜한것같고.. 에어컨나오는 쾌적한 웨이팅 장소가 따로 마련돼있어요 주차도 문제없음", "lat": 37.453177, "lng": 126.70622}, {"id": 47, "name": "백승희의들밥", "region": "경기·인천", "sigungu": "광명시", "address": "경기도 광명시 밤일로 79 1층", "recommender": "이세철", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n집 근처 소문난 맛집", "menu": "들밥 한상차림, 명인 보리굴비, 명인 간장게장", "tips": "주말엔 예약 필수, 2인~4인 세트만찬 추천", "lat": 37.480937, "lng": 126.863977}, {"id": 48, "name": "안목 서면점", "region": "영남", "sigungu": "부산진구", "address": "부산 부산진구 부전동 534-2", "recommender": "김정희", "desc": "눈치 안 보고 편하게 먹는 ‘혼밥/혼술 명당’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’\nHS 가야, 범천 1-1구역 재개발, HS 사직아시아드 출장 시 서면에서 숙박하면서 방문하게 됨", "menu": "대표 : 돼지국밥, 숨은 메뉴 : 냉수육무침, 함께 주문하면 좋은 메뉴 : 복순도가 막걸리 (한 잔도 주문 가능)", "tips": "육수 무한리필이니, 리필해서 드세요.", "lat": 35.176108, "lng": 129.074653}, {"id": 49, "name": "당가원", "region": "경기·인천", "sigungu": "부천시", "address": "부천시 소사구 양지남로 39", "recommender": "박승열", "desc": "전날 마신 술이 싹 내려가는 ‘해장 종결지’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n일루미스테이트 현장 근무", "menu": "차돌박이짬뽕, 탕수육, 깐풍기", "tips": "점심시간 웨이팅이 있어, 영업시작(11시30분) 30분 전에 가길 추천합니다.", "lat": 37.507369, "lng": 126.766233}, {"id": 50, "name": "중화반점", "region": "서울", "sigungu": "대구", "address": "대구 중구 중앙대로 406-12", "recommender": "안용수", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n서울 출신 배우자도 반한 고향 맛집", "menu": "야끼우동", "tips": "웨이팅이 있어도 가게가 넓고 회전이 빨라서 대기시간이 생각보다 길지 않습니다.", "lat": 37.567369, "lng": 127.000386}, {"id": 51, "name": "골뱅이상회", "region": "경기·인천", "sigungu": "하남시", "address": "경기 하남시 미사강변동로 95 1층 1006호", "recommender": "최영환", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’ | 눈치 안 보고 편하게 먹는 ‘혼밥/혼술 명당’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n에코미사, 한강미사 견학 시 근처 식당", "menu": "통골뱅이탕", "tips": "이른 저녁시간이 웨이팅이 많이 없어 추천드립니다", "lat": 37.535292, "lng": 127.216566}, {"id": 52, "name": "옹시미 경복궁점", "region": "서울", "sigungu": "종로구", "address": "서울 종로구 사직로 105", "recommender": "임경택", "desc": "속 따뜻하고 녹진한 국물요리가 먹고 싶을때. | 전날 마신 술이 싹 내려가는 ‘해장 종결지’\n아내의 지인을 통해", "menu": "옹시미칼국수, 들기름막국수", "tips": "점심엔 주말/주중 상관없이 웨이팅이 있고 별도의 예약시스템은 없어 줄을 서야 합니다.", "lat": 37.574354, "lng": 126.979596}, {"id": 53, "name": "문래돼지불백", "region": "서울", "sigungu": "영등포구", "address": "서울 영등포구 당산로 2-1 1층 문래돼지불백", "recommender": "박대우", "desc": "뭐 먹지? 고민스러울때 아무 생각 없이 갈 수 있는 집\n집근처", "menu": "불백", "tips": "24시간 아무때나 가면 됩니다.", "lat": 37.524535, "lng": 126.897328}, {"id": 54, "name": "일월카츠", "region": "서울", "sigungu": "종로구", "address": "서울 종로구 계동길 17", "recommender": "여은숙", "desc": "개인적으로 바삭한 돈가스에 든든한 밥과 국까지. 친구오면 데려가는 안국 최고 맛집입니다 | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’\n회사 바로 앞에 생겨서 먹게 되었어요", "menu": "상등심 돈까스가 제일 맛있습니다. 안심도 몇점 주거든요. 소금에 찍어먹다가 트러플소스에 찍어먹음 2배 맛있습니다. 자리가 좁아서 바 형식인게 유일무이한 단점인데 그만큼 맛있어서 양해할 수 있습니다.", "tips": "캐치테이블 원격 웨이팅으로 걸고 점심시간에 가서 먹으면 좋습니다.", "lat": 37.569792, "lng": 126.978778}, {"id": 55, "name": "큰마을영양굴밥", "region": "충청·대전", "sigungu": "서산시", "address": "충남 서산시 부석면 간월도1길 65", "recommender": "이규범", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n현대건설 서산 연수원 방문시 찾아가는 맛집!!", "menu": "영양굴밥, 굴 파전", "tips": "웨이팅이 길수 있으니 기다리는 동안 간월도 구경하고 오세요", "lat": 36.78413, "lng": 126.453931}, {"id": 56, "name": "우정", "region": "서울", "sigungu": "강남구", "address": "서울 강남구 도산대로55길 23", "recommender": "윤진아", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’\n나만 알고싶은 압구정 아지트였는데.. 이제는 너무 유명해져버린, 오래 전에 우연히 친구와 들렀다가 알게된 맛집입니다.", "menu": "한우곱창전골과 이곳에서만 맛볼 수 있는 꼬수운 등골! 곱창전골은 다 먹고 볶음밥을 꼭 시켜서 드세요.. 스지찜도 완전 맛있습니다......", "tips": "네이버 예약하고 가면 웨이팅없이 갈 수 있어요 !", "lat": 37.520207, "lng": 127.045407}, {"id": 57, "name": "대일분식", "region": "호남", "sigungu": "익산시", "address": "전북 익산시 창인동1가 131-1", "recommender": "주종진", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’\n와이프 고향으로 맛집 탐방 중 이용하게 되었습니다.", "menu": "짬뽕라면(전날 술을 드신 애주가 라면 꼭 기본 짬뽕라면 을 드셔야 합니다.), 탕수육(탕수육은 찍먹과 부먹으로 나뉜다 하지만 여기는 부먹스타일 입니다. 후회는 하지 않습니다.)", "tips": "공영주차장이 가까워 주차 후 가볍게 걸아갈만 합니다.", "lat": 35.948305, "lng": 126.955029}, {"id": 58, "name": "한우마을", "region": "충청·대전", "sigungu": "서산읍", "address": "청청남도 서산읍 대산면 대산리 973번지", "recommender": "유희영", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n현대오일뱅크 HPC Project 수행 시, 회식을 통해 알게 되었음", "menu": "한우(한우정육식당), 된장찌개 (된장술밥 가능)", "tips": "지역 Local 맛집이어서 특별히 웨이팅은 없으며, 주차는 식당앞에 공터가 있음", "lat": 36.403301, "lng": 127.302964}, {"id": 59, "name": "탑골순대국", "region": "경기·인천", "sigungu": "용인시", "address": "경기 용인시 수지구 풍덕천로147번길 10-4", "recommender": "이기대", "desc": "전날 마신 술이 싹 내려가는 ‘해장 종결지’\nHS수지구청역 / 경기도 1등 순대국밥집으로 유명해서 방문해봤습니다.", "menu": "순대국", "tips": "고기나오는시간에 맞춰서 가시면 사람은 많지만 방금 나온 머릿고기 먹을 수 있답니다.^^", "lat": 37.239488, "lng": 127.178712}, {"id": 60, "name": "돈가네 갈비김치찌개", "region": "충청·대전", "sigungu": "유성구", "address": "대전 유성구 학하동로64번길 32 1층", "recommender": "황동현", "desc": "전날 마신 술이 싹 내려가는 ‘해장 종결지’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\nHS도안리버파크 1단지", "menu": "갈비 김치찌개", "tips": "미리 예약하고 가면 음식이 빨리 나옵니다.", "lat": 36.351272, "lng": 127.381723}, {"id": 61, "name": "고기대장", "region": "경기·인천", "sigungu": "고양시", "address": "경기도 고양시 덕양구 신원로 18", "recommender": "서태원", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’ | 명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n덩네 맛집으로 지인소개", "menu": "본갈비살 - 저렴하고(한우대비, 500g에 89,000원) 부드러운 와규로 입에서 녹는 소고기, 항정살 - 돼지고기 특유의 고소함과 식감", "tips": "사장님이 친절하셔서 계란찜 더 달라고 해보세요, 방문전에 차 주차 말씀하시면 사장님이 주차게이트 열어주십니다.", "lat": 37.6605, "lng": 126.832315}, {"id": 62, "name": "우렁이박사", "region": "충청·대전", "sigungu": "당진시", "address": "충남 당진시 샛터로 7-1", "recommender": "문용기", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n고향이 충남이라 지역 주민 추천 받았습니다.", "menu": "우렁덕장, 우렁쌈장", "tips": "주차장은 잘되어있는거 같습니다. 서해 고속도로 이용하시면 잠시 들르기 좋습니다.", "lat": 36.895829, "lng": 126.629943}, {"id": 63, "name": "이이칸지 청라", "region": "경기·인천", "sigungu": "서해구", "address": "인천 서해구 청라커낼로 319번길 9, 1층", "recommender": "양영재", "desc": "눈치 안 보고 편하게 먹는 ‘혼밥/혼술 명당’\n하나드림타운 현장에 있을 때, 숙소 바로 앞에 있던 일식 돈카츠 집입니다. 숙소 앞에 있는 다른 돈카츠 집을 가려다가 재료 소진으로 못가고, 큰 기대없이 방문한 곳인데.. 오히려 제가 가려고 했던 돈카츠 집 보다 더 맛있어서 놀란 곳입니다! 알고보니 여기 사장님이 (돈카츠 좋아하는 분들이라면 한번쯤은 가보셨을) 카츠바이콘반에서 배우신 분이더라구요. 하나드림타운 현장에 있으면서 정말 여러번 방문한 또x10 간집!", "menu": "믹스(로스+히레) 카츠가 정말 맛있고, 색다른 맛을 찾으시면 미소카츠도 추천합니다. 아사히 생맥주를 비롯한 여러 주류를 팔기 때문에 함께 곁들이면 좋습니다!", "tips": "제가 처음 갔을 때만하더라도 크게 유명하지 않은 집이라서 이러다 망하는거 아닌가 걱정했는데.. 어느순간 입소문을 타고 사람이 많아져서 평일에도 웨이팅을 하는 식당이 되었습니다 ㅠㅠ.. 그래서 식사시간을 조금 피해서 가시면 웨이팅도 없고 갓튀긴 바삭한 돈카츠를 즐길 수 있습니다!", "lat": 37.452305, "lng": 126.703793}, {"id": 64, "name": "진양재순대 삼성", "region": "서울", "sigungu": "서울특별시", "address": "서울특별시 강남구 봉은사로114길 38 1층", "recommender": "김태영", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’\nGBC, 공공기여 현장 근처", "menu": "순대국밥, 철판볶음", "tips": "점심은 11시 30분 이후에 가면 웨이팅 상당함, 저녁에는 웨이팅 없음", "lat": 37.513356, "lng": 127.050733}, {"id": 65, "name": "장영선원조지례삼거리불고기", "region": "영남", "sigungu": "김천시", "address": "경북 김천시 지례면 장터길 64", "recommender": "윤기주", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’ | 명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n김천 사는 친구 집으로 놀러 갔었다가 김천의 맛집으로 소개 받아 친구랑 같이 저녁으로 먹었던 곳입니다.", "menu": "이 곳에서 꼭 먹어야 하는 대표 추천 메뉴는 양념불고기 입니다. 옛날 노포 느낌의 맛집으로 연탄불에 석쇠 위에 구워먹는 양념불고기는 한번도 안 먹어본 사람은 있어도 한번만 먹어본 사람은 없을 정도로 진한 불맛이 일품입니다. 식사로 같이 주문 가능한 보리밥에 같이 나오는 반찬들과 열무김치, 참기름 살짝 넣어 비벼 먹으면 즉석에서 만들어지는 꽁보리 비빔밥이 완성되며, 양념불고기와 궁합이 아주 잘 맞습니다.", "tips": "주말보다는 평일에 방문하거나 명절 연휴 중 방문드리는 걸 추천드리며, 차를 끌고 와야 하기 때문에 술을 드신다고 하면은 대리기사 필수입니다. 캐치테이블 같은 웨이팅 어플이 없어서 방문 전에 전화로 확인하는 걸 추천드리며 현장 웨이팅이 있는 경우 30분 정도는 예상하고 가셔야 합니다. 식당에서 직접 운영하는 주차장은 없고, 인근 공터에  주차 가능한 곳들이 있으니 주변 주차터를 확인하시는 것이 좋습니다.", "lat": 36.14283, "lng": 128.116253}, {"id": 66, "name": "만복순대국", "region": "경기·인천", "sigungu": "안양시", "address": "경기도 안양시 만안구 양화로 159", "recommender": "변준식", "desc": "바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’\n부대 근처", "menu": "순대국", "tips": "주차 안됩니다.", "lat": 37.39276, "lng": 126.953263}, {"id": 67, "name": "카페 툇마루", "region": "강원", "sigungu": "강릉시", "address": "(도로명) 강원 강릉시 난설헌로 232 카페 툇마루 / (지번) 강원 강릉시 초당동 355", "recommender": "박종식", "desc": "든든한 식사 후 달콤한 커피 한잔의 여유~\n데이트코스로 처음 방문하고 맛에 반해서 가족여행코스로 발전한 커피맛집", "menu": "대표메뉴 : 툇마루커피", "tips": "웨이팅 순번표 받고, 근처 산책코스 (허균/허난설헌기념공원, 경포아쿠아리움, 아르떼뮤지엄강릉 등) 방문하면 웨이팅 시간이 지루하지 않음", "lat": 37.754924, "lng": 128.879676}, {"id": 68, "name": "부성민물매운", "region": "충청·대전", "sigungu": "천안시", "address": "충남 천안시 서북구 2공단1로 34 부성민물매운탕", "recommender": "오치원", "desc": "어죽 입문자부터 경험자까지 모두 만족 시킬 수 있는 '전국구 어죽 맛집'\n업체 출장으로 천안을 방문 했을 당시, 업체 담당자분이 자신있게 어죽 맛집이라고 추천하여 방문하게 되었습니다.", "menu": "새우어죽 추천 ! 인삼 향을 좋아하는 사람이라면 별미로 인삼어죽 ! 그리고 업체 분 말로는 송어회 맛집이라고 합니다.", "tips": "평일/ 주말 점심 피크 시간대만 피해주시면 괜찮을거 같습니다. ( 주차 공간이 협소합니다. ㅜ )", "lat": 36.811785, "lng": 127.113788}, {"id": 69, "name": "해초 양산본점", "region": "영남", "sigungu": "양산시", "address": "경남 양산시 삼성3길 17-12 1층", "recommender": "김서연", "desc": "출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n이곳은 제 본가에 계신 부모님 맛집입니다. 쉬는날 내려갈때 매다 부모님이랑 꼭 먹으러 가는 물회집입니다.", "menu": "저는 무조건 참가자미+광어 물회를 먹는데요, 오징어도 좋아해서 한치+갑오징어 물회도 강력추천 드립니다~! 그리고 이곳은 나주배 육수를 주는데 이 육수가 진짜 달큰하고 맛있어요~! 냉장고 가득 나주배가 가득한 곳이랍니다. 또 배를 채썰어서 가득 넣어주세요. 물회만 시켜도 매운탕 무조건 기본에 기본찬도 정말 깔끔하고 맛있습니다.", "tips": "당연히 건물 내 지상에 주차장이 있구요~! 여름 성수기엔 항상 점심전부터 사람이 많이 있습니다. 살짝 식사시간대 지나가시면 좋고, 메뉴 자체가 차가운 음식이다 보니 회전율은 좋아서 빨리 자리가 나니 웨이팅은 기다리실만 합니다~! 강추드립니다.", "lat": 35.331554, "lng": 129.039385}, {"id": 70, "name": "한영식당", "region": "서울", "sigungu": "대전광역시", "address": "대전광역시 중구 계룡로874번길 6", "recommender": "조양두", "desc": "눈치 안 보고 편하게 먹는 ‘혼밥/혼술 명당’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n동료의 추천으로 알게 된 식당으로, 10년째 방문 중 입니다.", "menu": "닭볶음탕 (식후 볶음밥이 진짜진짜진짜 맛있습니당)", "tips": "양이 많으니깐, 배 안부른 상태로 가세용~", "lat": 37.565727, "lng": 126.994527}, {"id": 71, "name": "뚱이네 포차", "region": "충청·대전", "sigungu": "서산시", "address": "충남 서산시 읍내1로 5 뚱이네포차", "recommender": "이한솔", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n서산특구 기반시설공사 현장 근무중", "menu": "굴보쌈, 고추장찌개", "tips": "보쌈은 2시간전 예약한 사람 한정으로 고기를 하기 때문에 예약 필수", "lat": 36.784302, "lng": 126.450698}, {"id": 72, "name": "동원순대집", "region": "호남", "sigungu": "전주시", "address": "전주시 완산구 쑥고개로 391 (효자동)", "recommender": "최용현", "desc": "전날 마신 술이 싹 내려가는 ‘해장 종결지’\n전북 전주시 완산구 쑥고개로 391 동원순대집", "menu": "순대국밥", "tips": "주차장 有", "lat": 35.82232, "lng": 127.150979}, {"id": 73, "name": "유포리막국수", "region": "강원", "sigungu": "춘천시", "address": "강원 춘천시 신북읍 맥국2길 123", "recommender": "김창열", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n군 복무", "menu": "대표메뉴는  막국수와 편육입니다. 처음에는 비빔막국수로 먹다가 중간부터 동치미 육수를 넣어 물막국수로 먹는 걸 추천합니다.", "tips": "현대건설이 시공한 소양강댐이 근처라 나들이 겸 식당 방문을 추천합니다.", "lat": 37.880685, "lng": 127.727494}, {"id": 74, "name": "유진식당", "region": "서울", "sigungu": "종로구", "address": "서울 종로구 종로17길 40", "recommender": "지영주", "desc": "눈치 안 보고 편하게 먹는 ‘혼밥/혼술 명당’\n본사근무중 우연히 퇴근하다가 줄 서 있는 식당을 발견!!", "menu": "평양냉면, 녹두전", "tips": "화요일 휴무", "lat": 37.573214, "lng": 126.981139}, {"id": 75, "name": "청수옥", "region": "경기·인천", "sigungu": "미추홀구", "address": "인천 미추홀구 주승로 84", "recommender": "조현우", "desc": "눈치 안 보고 편하게 먹는 ‘혼밥/혼술 명당’ | 명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n고향", "menu": "판모밀과 수육, 육칼", "tips": "주7일 식당 오픈(정기 휴무일 X)이며, 9시 30분 부터 21시까지 영업합니다.", "lat": 37.453909, "lng": 126.703694}, {"id": 76, "name": "용당횟집", "region": "영남", "sigungu": "기장군", "address": "부산 기장군 일광읍 칠암1길 8", "recommender": "명경미", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’\n울산 샤힌 현장에서 근무중에 붕장어 맛집을 소개 받아 찾아갔습니다.", "menu": "붕장어회, 붕장어 구이", "tips": "식사 마치고 칠암사계에서 가지는 한잔의 커피와 휴식", "lat": 35.183561, "lng": 129.076799}, {"id": 77, "name": "도촌막국수", "region": "강원", "sigungu": "양구군", "address": "강원 양구군 국토정중앙면 국토정중앙로6", "recommender": "최정재", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n아내 친할머님댁에 처음 인사드리러 갔을 때 친할머님과 같이 방문했었던 식당", "menu": "막국수", "tips": ".", "lat": 38.104905, "lng": 127.989841}, {"id": 78, "name": "서울뼈구이", "region": "서울", "sigungu": "동대문구", "address": "서울 동대문구 왕산로 274-1", "recommender": "심승보", "desc": "출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n회사분의 추천", "menu": "뼈구이 (맵기 조절 가능하니 선택하시면 됩니다~~) 그리고 날치알 주먹밥과 소주는 함께 주문 부탁드립니다!!", "tips": "늘 웨이팅이 있으니 매운게 먹고 싶은날 1시간차 쓰고 방문해 보는건 어떨까요?!", "lat": 37.571368, "lng": 127.037798}, {"id": 79, "name": "야마다야", "region": "경기·인천", "sigungu": "성남시", "address": "경기도 성남시 분당구 구미로 124 굿모닝프라자 1층", "recommender": "이민석", "desc": "흔한 체인 음식점에서 벗어나 전통적인 일본 감성 자루우동을 경험하고 싶을 때 | 명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n자루우동을 좋아하는 와이프와 가려고 찾아낸 찐 맛집입니다.", "menu": "자루붓가께우동 정식", "tips": "웨이팅이 있으나 회전률도 빠릅니다. 메인 시간대 전/후로 피해가시면 편하게 드실 수 있어요.", "lat": 37.418805, "lng": 127.127206}, {"id": 80, "name": "대흥식당", "region": "경기·인천", "sigungu": "오산시", "address": "경기 오산시 오산로278번길 9-12 중부상회", "recommender": "이지환", "desc": "노포와 전통시장 분위기를 즐기고 싶을 때 | 눈치 안 보고 편하게 먹는 ‘혼밥/혼술 명당’ | 명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’\n본가 (부모님댁)", "menu": "돼지국밥, 수육", "tips": "점심시간은 피하세요. 국밥의 밥은 미리 말아져 나오는 토렴식. 돼지머리고기의 비계와 특유의 식감에 호불호", "lat": 37.147641, "lng": 127.074962}, {"id": 81, "name": "부농정육식당", "region": "서울", "sigungu": "서울시", "address": "서울시 송파구 백제고분로 28길 29", "recommender": "지상욱", "desc": "신선한 소고기와 경험하지 못한 차돌박이가 생각나는날\n집근처 정육 식당", "menu": "눈꽃차돌", "tips": "웨이팅 많음. 주차 불가.", "lat": 37.511068, "lng": 127.107649}, {"id": 82, "name": "용당횟집", "region": "영남", "sigungu": "기장군", "address": "부산 기장군 일광읍 칠암1길 8", "recommender": "차윤환", "desc": "출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n샤힌 현장 근무 중 근방에 휴양지 느낌으로 찾았습니다", "menu": "아나고 회, 장어구이", "tips": "자유롭습니다. 포장이나 전국 배송도 가능하다고 하시네요", "lat": 35.177432, "lng": 129.078843}, {"id": 83, "name": "삼일식당", "region": "제주", "sigungu": "제주시", "address": "제주특별자치도 제주시 한림읍 동명리 1614-8", "recommender": "이준호", "desc": "전날 마신 술이 싹 내려가는 ‘해장 종결지’\n제주한림 해상풍력 소송의 감정 착수회의를 위하여 한림읍에 방문했다가, 내장탕 잘하는 식당이 있다고 하여 방문했습니다. (저는 여행이나 출장갈 때 그 지역 순대국/내장탕/돼지국밥집은 꼭 들리는 편입니다.)", "menu": "내장탕(간이 강하지 않은 편아서 밋밋하다라고 생각할 수 있지만, 다진마늘을 넣어 깊이를 더하고, 반찬으로 내어주는 갈치속젓으로 간을 맞추면, 냉탕과 온탕을 오가는 느낌처럼 큰 자극을 느낄 수 있음)", "tips": "오전 6시에 열어서 오후 3시면 닫는 곳이라, 일찍 가야 합니다.", "lat": 33.502477, "lng": 126.527767}, {"id": 84, "name": "문덕 조야식당", "region": "영남", "sigungu": "포항시", "address": "경북 포항시 남구 오천읍 문덕로11번길 4", "recommender": "강성희", "desc": "눈치 안 보고 편하게 먹는 ‘혼밥/혼술 명당’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’\n본거주지가 포항인데 동네 맛집으로 소문나있습니다!! 포항 자체 방송에서 출연한 적도 있고 포스코, 현대제철 등 포항시 남구 직원들이 많이 애용하는 식당입니다.", "menu": "제육볶음이 킥입니다... 제육볶음을 시키면 된장찌개가 같이 나오고 밥도 셀프로 무한정 먹을 수 있습니다.", "tips": "오후 7시까지 영업시간이라 적혀있지만 대개 오후 6시면 정리 하셔서 점심만 먹을 수 있다 생각하시면 될거같아요", "lat": 36.016904, "lng": 129.344852}, {"id": 85, "name": "선창횟집", "region": "강원", "sigungu": "동해시", "address": "강원도 동해시 일출로 233", "recommender": "이준형", "desc": "출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n제 고향 동해시에 위치해있고, 사장님이 선장님이셔서 자연산 회를 드실 수 있습니다", "menu": "자연산 회", "tips": "주차장은 널널하고, 여름철만 피하면 웨이팅 없이 이용 가능합니다. 넓은 창에 바닷가가 바로 앞에 있어 2층 자리를 추천드려요", "lat": 37.522414, "lng": 129.111358}, {"id": 86, "name": "아바이회국", "region": "강원", "sigungu": "속초시", "address": "강원 속초시 청호로 115-12", "recommender": "전대중", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n속초 여행시 방문하는 밥집", "menu": "회덮밥, 회국수", "tips": "주말에 사람이 많으므로, 아침일찍 방문하여 대기명단에 원하는 시간 작성 후 주변 관광 후 재방문, 주변에 주차 공간 많아요.", "lat": 37.207084, "lng": 128.592468}, {"id": 87, "name": "조선갈비", "region": "경기·인천", "sigungu": "안산시", "address": "경기 안산시 단원구 선부광장로 77 늘봄스위트빌2 2층", "recommender": "이규호", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n현지인 추천으로 가봤음", "menu": "양념돼지갈비", "tips": "목금토 저녁은 웨이팅있음. 사전예약 추천", "lat": 37.321681, "lng": 126.833177}, {"id": 88, "name": "고기국밥", "region": "경기·인천", "sigungu": "이천시", "address": "경기 이천시 마장면 덕평로 698 1층", "recommender": "이승윤", "desc": "바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’\n관련 현장 : 힐스테이트 이천역", "menu": "빨간해장국", "tips": "혼밥 손님은 12시 30분 이후부터 가능. 점심때만 영업.", "lat": 37.27476, "lng": 127.432523}, {"id": 89, "name": "기장손칼국수", "region": "영남", "sigungu": "부산진구", "address": "부산 부산진구 서면로 56", "recommender": "정기성", "desc": "손으로 칼국수 면을 직접 뽑으시고, 쑥갓이 포함되어 있어서, 국물이 아주 시원함\n지인을 통해서 알게 되었습니다.", "menu": "칼국수", "tips": "칼국수 주문 시, 김밥주문을 함께하시는 걸 추천드려요.", "lat": 35.176375, "lng": 129.075048}, {"id": 90, "name": "천수식당", "region": "호남", "sigungu": "구례군", "address": "전남광주 구례군 섬진강로 15-16", "recommender": "배완섭", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n어린시절 부모님 손잡고 다니던 식당인데, 아직도 다니는 식당이예요.", "menu": "섬진강을 바라보며 맛있는 참게탕과 겨울철 별미인 눈치회무침이 맛있어요. 겨울철에는 눈치회무침을 먼저 맛보고 참게탕을 먹는게 정석이예요.", "tips": "KTX로 구례구역을 이용하면 편기하고, 여건이 되면, 구례구역에서렌트 후 근처 사성암, 화엄사, 섬진강변 열차바이크 방문하면 좋습니다.", "lat": 35.158889, "lng": 126.852336}, {"id": 91, "name": "잉글랜드 경양식 돈까스", "region": "경기·인천", "sigungu": "제물포구", "address": "인천 제물포구 우현로 90번길 7 혜성빌딩 2층", "recommender": "김성찬", "desc": "옛날 경양식 돈까스가 생각나시는 분께 추천드립니다.\n경양식돈까스 검색하다 우연히 발견", "menu": "옛날 경양식 돈가스", "tips": "영업시간 : 11시 30분 / 주말엔 1시간정도 웨이팅이 있습니다. / 주차는 도보 2분거리 공영주차장이 있습니다.", "lat": 37.458133, "lng": 126.706587}, {"id": 92, "name": "삼척곰치국", "region": "경기·인천", "sigungu": "영종구", "address": "인천 영종구 백운로186번길 71", "recommender": "오영애", "desc": "전날 마신 술이 싹 내려가는 ‘해장 종결지’\n전에 근무했던 현장 주변 식당입니다(영종도준설토투기장현장)", "menu": "대구탕 추천 (맑은 탕으로 전날의 해장과 피로가 싹 풀리는 맛)", "tips": "외진 곳에 있지만 예약필수~~~", "lat": 37.460173, "lng": 126.701987}, {"id": 93, "name": "삼보식당", "region": "제주", "sigungu": "서귀포시", "address": "제주 서귀포시 중정로 25", "recommender": "권희연", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n고향", "menu": "갈치조림과 고등어구이를 시켜 드셔보세요, 손바닥만한 갈치에 칼칼하고 달달한 양념이 너무 맛있는 조림과 베지근한 고등어구이가 할머니손맛을 생각나게 합니다", "tips": "웨이팅은 없고, 주차는 옆에 공영주차장이나 길가에 하시면 될거에요", "lat": 33.253321, "lng": 126.558814}, {"id": 94, "name": "베트남쌀국수", "region": "영남", "sigungu": "울진군", "address": "경상북도 울진군 죽변면 죽변중앙로 169-1", "recommender": "차영란", "desc": "바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’\n2018년도 현장부임으로 알게되어 타지역에 사는 친구들에게도 추천하고 있음_신한울원자력3,4호기 현장", "menu": "모든메뉴가 맛있음 사장님이 베트남분이 직접 요리함", "tips": "점심/저녁 가능, 주차장은 맞으편 시장주차장 이용 [무료, 장날 3일/8일 주차불가]", "lat": 36.995893, "lng": 129.398289}, {"id": 95, "name": "돼지식당", "region": "영남", "sigungu": "울진군", "address": "경상북도 울진군 죽변면 죽변중앙로 202-3", "recommender": "윤현정", "desc": "전날 마신 술이 싹 내려가는 ‘해장 종결지’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n신한울 3,4호기 사원 아파트 근처 생대구탕 맛집", "menu": "생대구탕 (지리탕 최고) 메인은 메인이다! 생대구탕 시키면 실패는 안합니다.", "tips": "차림비 내고 바로 앞 수협에서 회떠서 같이 먹기 가능!  대게도 사오면 같이 먹을 수 있어요. (울진대게는 겨울이 시즌!) 대게 구매도 모르겠다고하면 사장님께 소개를 부탁해 보는 것도 좋은 방법입니다. 완전 로컬 맛집", "lat": 36.990522, "lng": 129.399889}, {"id": 96, "name": "태화루", "region": "충청·대전", "sigungu": "공주시", "address": "충남 공주시 유구읍 중앙1길 45 (태화루)", "recommender": "최도현", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n아버지 고향에 꼬막짬뽕으로 유명한 집인데, 벌초 때마다 들르는게 루틴이 된 중국집입니다.", "menu": "일단은 꼬막짬뽕으로 유명합니다. 다들 짬뽕 먹으러 가는데, 저는 옛날식 달달한 짜장면 맛이 좋아서, 이 집에 가면 짜장면을 주로 먹습니다.", "tips": "웨이팅이 있으나, 금방 빠지는 편입니다.", "lat": 36.445875, "lng": 127.117228}, {"id": 97, "name": "한라산횟집", "region": "서울", "sigungu": "강서구", "address": "서울 강서구 양천로 401 강서한강자이타워A동 1층", "recommender": "김가은", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’\n마곡 더그리드", "menu": "고등어회. 메뉴판에 없지만 단초밥을 주문하면 한접시 내어주시니 주문 필수.", "tips": "예약추천. 7시에 고등어가 다 팔리는 경우도 있으니 늦어도 6시엔 방문하는걸 추천", "lat": 37.548898, "lng": 126.852886}, {"id": 98, "name": "본꼴", "region": "영남", "sigungu": "울진군", "address": "경북 울진군 울진읍 월변2길 28 본꼴", "recommender": "박한빈", "desc": "출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n신한울 3,4호기 주설비공사 현장 설계사 직원의 추천", "menu": "양갈비, 소갈비, 대창, 특양 등 다양한 메뉴가 있지만 숯불향을 입혀 초벌한 생삽겹살이 1티어 입니다. 그 어디에서도 이 정도의 숯불향을 입힌 고기를 먹을 수 없었습니다.", "tips": "미리 전화 예약하지 않으면 워크인으로는 방문이 어려우니 전화 예약 필수! 주차는 바로 옆에 큰 공영주차장이 있습니다.", "lat": 36.992545, "lng": 129.403191}, {"id": 99, "name": "엄가네본가시골집 본점", "region": "충청·대전", "sigungu": "천안시", "address": "충남 천안시 서북구 성정동 142-15", "recommender": "박진환", "desc": "눈치 안 보고 편하게 먹는 ‘혼밥/혼술 명당’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’\n고향", "menu": "뼈 해장국, 매운맛은 매우 매움 주의", "tips": "점심시간 웨이팅이 있음. 분점X 오로지 본점O, 주차 약 40대 정도 가능함.", "lat": 36.815503, "lng": 127.110305}, {"id": 100, "name": "청하 시장식육식", "region": "영남", "sigungu": "포항시", "address": "대한민국 경상북도 포항시 북구 청하면 미남리 383-2", "recommender": "김민준", "desc": "바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’\n고향", "menu": "돼지찌게", "tips": "돼지찌게, 소찌게는 고기 부터 쌈과 함께 먹고, 국물이 쪼르면 밥과 비벼 먹으면 됩니다.", "lat": 36.022994, "lng": 129.346188}, {"id": 101, "name": "성수동 소문난감자탕", "region": "서울", "sigungu": "서울시", "address": "서울시 성동구 성수동2가 315-100", "recommender": "김용일", "desc": "눈치 안 보고 편하게 먹는 ‘혼밥/혼술 명당’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’\n뼈다귀해장국을 좋아해서 전국 맛집은 다 검색하고 찾아 다녔으나 여기가 제일 맛있습니다. 일부로 찾아가는 식당입니다.", "menu": "뼈다귀 감자탕", "tips": "성수동 특성상 항상 대기줄이 많은 곳이지만, 1인 방문이라면 줄 서지 말고 바로 입장 가능합니다.", "lat": 37.567052, "lng": 127.040511}, {"id": 102, "name": "조훈모과자점", "region": "호남", "sigungu": "순천시", "address": "전남광주 순천시 봉화로 46 조훈모과자점", "recommender": "김정선", "desc": "빵지순\n지방근무시 단골집", "menu": "대표메뉴 배빵, 추천메뉴 크림팥빵", "tips": "빵 종류별로 빵 나오는 시간이 다르니 미리 알아보고 방문하세요.", "lat": 35.16229, "lng": 126.84993}, {"id": 103, "name": "밤섬횟집", "region": "영남", "sigungu": "창원시", "address": "경남 창원시 진해구 속천로 150-1 밤섬횟집", "recommender": "한재연", "desc": "출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n출장 중 현지인 추천으로 알게 되었어요.", "menu": "인원에 따라 모둠회를 시키면 주인 아저씨가 당일 잡은 자연산 회를 섞어 주셔요.", "tips": "예약은 필수, 식사 후 바로 옆 바다가 보이는 커피숍은 덤, 주차는 여유로와요. 봄에 진해군항제 보러 갈때 반드시 들릴 예정입니다.", "lat": 35.227885, "lng": 128.67881}, {"id": 104, "name": "더도이 종가집 돼지국밥", "region": "영남", "sigungu": "북구", "address": "부산 북구 의성로 91", "recommender": "오정묵", "desc": "눈치 안 보고 편하게 먹는 ‘혼밥/혼술 명당’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’\n부산에 있으면서 이곳 저곳 찾아다니다 지인 소개 받고 가서 단골이 된 식당, 부산 돼지국밥의 정수를 맛보고 싶다면 무조건 여기로.", "menu": "한번가서 드신다면 꼭 백반보단 돼지국밥으로,", "tips": "평일 점심에 조금 일찍가면 주차 자리가 한가합니다. [김해, 양산 등 분점들도 있으니 참고(맛은 90% 보장)]", "lat": 35.178808, "lng": 129.072069}, {"id": 105, "name": "임가네민물장어", "region": "경기·인천", "sigungu": "제물포구", "address": "인천 제물포구 샛골로 169", "recommender": "최신묵", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n고향, 외가 친척 어른의 추천", "menu": "민물장어(양념, 소금)", "tips": "주차할 곳이 마땅히 없으므로 대중교통 이용, 옆에 있는 창석원조닭알탕에서 아구탕도 괜찮다.", "lat": 37.455332, "lng": 126.709082}, {"id": 106, "name": "양사싯골", "region": "충청·대전", "sigungu": "유성구", "address": "대전 유성구 유성대로 1366번길 15-36", "recommender": "임현묵", "desc": "출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n대전 북대전 톨게이트 근처로 대전에 연구단지 근처 방문했을 때 지역 맛집으로 소개받아서 알게 되었습니다.", "menu": "청국장 정식, 제육볶음 (청국장 정식에도 제육볶음이 나오긴 하지만 1인분 추가해서 드시길 권장)", "tips": "식당 앞에 주차가 되긴 하나 피크 시간 때는 단골 손님이 많은 편이긴 합니다만, 충청도 정통 청국장 맛집이랍니다. 추천드립니다.", "lat": 36.348522, "lng": 127.386773}, {"id": 107, "name": "비학산칼국수 해운대본점", "region": "영남", "sigungu": "해운대구", "address": "부산 해운대구 해운대해변로 329-4", "recommender": "윤철원", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n어릴적부터 맛집이며, 현재 이주중인 부산 해운대구 우동3구역(디에이치 아센테르) 인근", "menu": "시원한 바지락 국물이 일품인 칼국수, 정갈한 반찬.", "tips": "사람들 방문안하는시간 방문 권장,평소웨이팅있음. 칼국수는 15분 조리시간이 길어서 유의해야하나 기다릴 가치 있음.", "lat": 35.17924, "lng": 129.074984}, {"id": 108, "name": "진성민속촌 부강 본점", "region": "충청·대전", "sigungu": "세종시", "address": "세종시 부강면 청연로 125", "recommender": "송보성", "desc": "뼈해장국의 남다른 찐한 맛 | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n행복도시~오송역간 도로공사 참여중 인근 식당", "menu": "뼈해장국", "tips": "05시부터 ~ 14시까지 영업", "lat": 36.483659, "lng": 127.292963}, {"id": 109, "name": "고릴라", "region": "서울", "sigungu": "서대문구", "address": "서울 서대문구 충정로 22-2", "recommender": "백범창", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’\n불가리아 코즐로두이 원전 7,8호기 설계공사 서울사무소", "menu": "모서리살과 김치찌개 주문필수, 노포감성 낭낭합니다.", "tips": "퇴근시간만 되면, 사람들이 엄청 붐비기 때문에, 미리 예약하시거나, 선택적 근로시간제를 적극 활용하셔서 5시쯤 먼저 자리잡는 것을 추천드립니다. 식당입구가 좁은 골목에 있기에 헷갈릴수도 있지만, 좁은 골목으로 들어가는 것 맞습니다!", "lat": 37.579546, "lng": 126.938547}, {"id": 110, "name": "대가웍", "region": "영남", "sigungu": "대구광역시", "address": "대구광역시 달성군 현풍읍 부리 196-2 1층 대가웍", "recommender": "김진희", "desc": "중식땡길때 매콤 달달 야끼우동 땡길 때 가는 중식 맛집 (탕수육도 필수코스 | 명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n고향에서 발견한 야끼우동 맛집", "menu": "야끼우동, 탕수육", "tips": "점심때 방문하면 웨이팅 필수 (앱으로 할 수 없고 무조건 현장대기), 주차장은 있으나 꽉찼다면 도로가 주차가능(차량통행이 많지않음)", "lat": 35.868638, "lng": 128.599774}, {"id": 111, "name": "미래수산식당", "region": "충청·대전", "sigungu": "서산시", "address": "충남 서산시 대산읍 삼길포1로 47", "recommender": "조석희", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n고향", "menu": "회덮밥, 물회 : 회가 그릇을 덮을 만큼 가득 담아줍니다.", "tips": "주차는 근처에 할 수 있지만, 웨이팅이 길고 현장대기를 해야 합니다. 그만큼 인기가 많습니다. (온라인 예약 불가)", "lat": 36.78825, "lng": 126.450933}, {"id": 112, "name": "죽천회타운", "region": "영남", "sigungu": "포항시", "address": "경북 포항시 북구 흥해읍 죽천길 91-2", "recommender": "엄수영", "desc": "알싸하게 스트레스 확 풀리는 음식이 땡길 때 '스트레스 타파'\n고향", "menu": "포항물회", "tips": "웨이팅이 있을 수 있으니 조금 이른 식사시간 방문 추천드립니다.", "lat": 36.019338, "lng": 129.345484}, {"id": 113, "name": "반도카츠 해운대본점", "region": "영남", "sigungu": "해운대구", "address": "부산 해운대구 좌동순환로 55 1층", "recommender": "박연선", "desc": "출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n지인소개", "menu": "안심카츠,레몬소바", "tips": "예약하고 방문하면 기다림 없이 가능", "lat": 35.176057, "lng": 129.076273}, {"id": 114, "name": "따봉시래기 대전봉명점", "region": "충청·대전", "sigungu": "유성구", "address": "대전 유성구 계룡로113번길 75", "recommender": "김민수", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n힐스테이트 도안리버파크 5단지 현장에 근무 中", "menu": "시레기 차돌쌈", "tips": "주차장은 가게앞에 별도로 있으며, 주말에는 사람이 많은걸로 알고있어 웨이팅 필요", "lat": 36.350423, "lng": 127.387322}, {"id": 115, "name": "풍촌코다리네", "region": "강원", "sigungu": "대구광역시", "address": "대구광역시 북구 고성동3가 102-7", "recommender": "박선희", "desc": "출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n힐스테이트 대구역오페라 현장인근에 위치하여 현장진행시 자주 들리던곳", "menu": "코다리찜", "tips": "11:00~21:00  인근 도로변 주차 가능", "lat": 35.868659, "lng": 128.605086}, {"id": 116, "name": "초가뭉텅찌개", "region": "강원", "sigungu": "춘천시", "address": "강원 춘천시 신북읍 율문리 107-1", "recommender": "임현성", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n레고랜드 테마파크현장 근무할 때 자주가던 김치찌개 맛집입니다.", "menu": "김치찌개", "tips": "메스컴을 타서 그런지 웨이팅 있습니다. 일찍출발하면 좋겠습니다", "lat": 37.877941, "lng": 127.727287}, {"id": 117, "name": "나주곰탕 하얀집", "region": "호남", "sigungu": "나주시", "address": "전남광주 나주시 금성관길 6-1", "recommender": "김은", "desc": "눈치 안 보고 편하게 먹는 ‘혼밥/혼술 명당’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’\n부모님 고향이 전라도라 지역 여행하면서 발견", "menu": "곰탕 단일메뉴에 수육 한접시+콤콤한 찐 전라도김치!! (국물이 진국이니 김칫국물 금지!! 그대로 드세요!!)", "tips": "포장은 매우 빠르지만, 가서 먹는 맛보다는... 회전이 빨라서 기다릴만 합니다. 그리고 기다림을 다 잊게 하는 맛!!", "lat": 35.16026, "lng": 126.854002}, {"id": 118, "name": "노을조개 거북섬", "region": "경기·인천", "sigungu": "시흥시", "address": "경기 시흥시 거북섬1로 4 110호, 111호", "recommender": "김유진", "desc": "출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n회식", "menu": "무한리필 조개구기 및 조개찜", "tips": "주차장 무료", "lat": 37.377882, "lng": 126.799859}, {"id": 119, "name": "고바우", "region": "서울", "sigungu": "서대문구", "address": "서울 서대문구 명물1길 22 1층", "recommender": "곽민주", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’\n대학교 재학시절 단골맛집", "menu": "소금구이와 기본으로 나오는 시락국", "tips": "정보 없음", "lat": 37.582222, "lng": 126.93477}, {"id": 120, "name": "마치옛떡", "region": "서울", "sigungu": "성북구", "address": "서울 성북구 동소문로26가길 11", "recommender": "이동규", "desc": "고정 데이트코스\n대학교 재학 중 치킨과 떡볶이를 동시에 파는 식당이 있어서 홀린듯 들어갔습니다. 근데 제가 외식을 진짜 안하는데, 여기는 이상하게 자꾸 손이 가더군요.", "menu": "마늘치킨, B세트(떡볶이+튀김+순대), 마치옛떡(치킨+떡볶이).", "tips": "전화주문 후 포장하면 할인이 쏠쏠합니다.", "lat": 37.589856, "lng": 127.019155}, {"id": 121, "name": "여수돼지국", "region": "호남", "sigungu": "여수시", "address": "전남광주 여수시 학동서3길 14-6", "recommender": "이연수", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n죽림더프라우드 현장 근무시 소장님께서 맛집이라고 데려가 주셨는데 진짜 소름끼칠 정도로 인생 국밥집이었습니다", "menu": "돼지국밥/수육", "tips": "예약은 안되니 12시 전까지 가면 웨이팅 없이 먹을 수 있습니다", "lat": 35.158854, "lng": 126.853269}, {"id": 122, "name": "호반", "region": "서울", "sigungu": "종로구", "address": "서울 종로구 삼일대로 26길 20", "recommender": "허재석", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’\n회식으로 두 세번 간적이 있습니다.", "menu": "병어찜, 모듬수육 죽습니다...", "tips": "미리 예약하고 방문하는걸 추천드립니다. 하지만 그냥 들러서 물어보면 사장님께서 친절하게 되는지 안되는지 알려주시니 한번 도전해보시길", "lat": 37.573082, "lng": 126.982778}, {"id": 123, "name": "우리장터", "region": "강원", "sigungu": "원주시", "address": "강원도 원주시 중앙시장길 20-33", "recommender": "김태우", "desc": "가족 여행 중 찾아가 볼만한 맛집 | 명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n강원도 여행길에 점심식사를 위해 들러서 가게된 곳으로 원주나 근처 여행길에 방문하면 좋을 곳입니다", "menu": "모듬구이, 된장찌개", "tips": "원주 중앙시장 공영주차장 주차 필수, 시장내에서도 길을 잃지 않도록 유의해야합니다", "lat": 37.339834, "lng": 127.92193}, {"id": 124, "name": "산아래 본점", "region": "충청·대전", "sigungu": "제천시", "address": "충북 제천시 봉양읍 앞산로 174", "recommender": "최미희", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n가족들과 서울에서 갈만한 온천을 찾고 있었는데....수안보 온천을 갔다 인터넷 검색해서 가게되었는데 우연히 가는날이 kbs 생생정보통 촬영날이라 저희 첫째, 둘째아들 인터뷰를 했는데 둘째아들 인터뷰만 티비에 나오게 되었습니다. 그래서 아주 기억에 남는 식당으로 인연이 있습니다.", "menu": "가격이 조금 있는 편이라 저희는 불맛 가득 두루치기 친환경 쌈 정식 및 오징어 더덕 정식을 먹었는데 정말 맛있다며 엄지척 하며 먹었던 기억이 나네요.", "tips": "웨이팅은 생각하고 가셔야 할듯 하며, 주차장은 넓은데... 대중교통으로는 힘들듯 합니다. 근처 가시면 한번 들러서 먹을만한 곳인거 같습니다.", "lat": 37.130509, "lng": 128.213266}, {"id": 125, "name": "감초식당", "region": "서울", "sigungu": "동대문구", "address": "서울 동대문구 약령서길 28", "recommender": "김영돈", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n힐스테이트 청량리 메트로블 현장 주변 식당", "menu": "대표메뉴는 돼지불갈비 이지만 고등어,삼치 구이 또한 맛있습니다.", "tips": "오후 3시~4시 브레이크타임  /  주차는 불가합니다.", "lat": 37.575774, "lng": 127.0384}, {"id": 126, "name": "합천일류돼지국밥", "region": "영남", "sigungu": "사상구", "address": "부산 사상구 광장로 34 윌로펌프", "recommender": "유한아", "desc": "눈치 안 보고 편하게 먹는 ‘혼밥/혼술 명당’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n고향", "menu": "고기 국밥을 시킨 후 우동사리 추가해서 같이먹는게 킥입니다", "tips": "주차가 불편한 게 단점입니다. 근처 공영주차장 주차하시고, 또간집 이후로 웨이팅이 있더라구요 24시간 운영되니 이른 아침 혹은 새벽에 여유롭게 가시는 걸 추천드립니다.", "lat": 35.178129, "lng": 129.077615}, {"id": 127, "name": "을밀대 평양냉면", "region": "서울", "sigungu": "마포구", "address": "서울 마포구 숭문길 24", "recommender": "고성현", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’\n지인소개", "menu": "평양냉면(양많이),녹두전", "tips": "웨이팅이있습니다 일찍 방문하면 좋습니다.", "lat": 37.56288, "lng": 126.901266}, {"id": 128, "name": "항만식당", "region": "경기·인천", "sigungu": "김포시", "address": "경기 김포시 월곶면 김포대로 2954 항만식당", "recommender": "김영주", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’ | 김포를 가게되면 일부러 돌아가는 길이라도 들러서 포장이라도 해야하는 맛집입니다. | 명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n30년 전 부모님 등산모임을 통해 따라다니게 된 것이 성인이 된 지금도 동태탕 하면 생각나는 맛집이 되었습니다.", "menu": "동태내장 모듬 전골!!!(저는 알고니를 좋아해서 무조건 알과 고니를 추가해서 먹어요, 끓었다고 바로 드시지 마시고 함께간 분들과 담소를 나누면서 딱 5분 만 더 끓여주면.. 크~ 맛있어지는 소리와 냄새, 끓을수록 더 깊은맛이 납니다)", "tips": "저녁에는 아주 가끔.. 재료소진으로 못먹을때도 있어요.. 시간이 늦었다면 꼭 미리 전화해보세요!", "lat": 37.619188, "lng": 126.719669}, {"id": 129, "name": "박만석 돼지곰탕 본관", "region": "영남", "sigungu": "양산시", "address": "경남 양산시 물금읍 목화4길 1 1층 박만석돼지곰탕", "recommender": "김호준", "desc": "점심 든든하게 국밥\n고향", "menu": "돼지곰탕", "tips": "11:10분,웨이팅, 길가 주차 가능", "lat": 35.331586, "lng": 129.035005}, {"id": 130, "name": "기절초풍왕순대", "region": "서울", "sigungu": "서울특별시", "address": "서울특별시 관악구 봉천로62길 2", "recommender": "고지혜", "desc": "눈치 안 보고 편하게 먹는 ‘혼밥/혼술 명당’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’\n자취생 주식", "menu": "순대정식, 참이슬 짜배기", "tips": "정보 없음", "lat": 37.476522, "lng": 126.955066}, {"id": 131, "name": "예원", "region": "영남", "sigungu": "울진군", "address": "경북 울진군 죽변면 죽변리 10-101", "recommender": "이호준", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’ | 명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n신한울 3,4호기 주설비공사 현장 부임 중 방문한 기억이 있습니다.", "menu": "죽변짬뽕", "tips": "주차공간이 두 군데 있어서 자리가 넉넉합니다. 단, 점심시간은 웨이팅이 있을 수 있습니다.", "lat": 36.996047, "lng": 129.403334}, {"id": 132, "name": "이치젠", "region": "서울", "sigungu": "마포구", "address": "서울 마포구 포은로 109", "recommender": "위나라", "desc": "눈치 안 보고 편하게 먹는 ‘혼밥/혼술 명당’\n지인 소개", "menu": "텐동", "tips": "식당이 작고 웨이팅이 길 수 있음!", "lat": 37.565256, "lng": 126.898862}, {"id": 133, "name": "고시해정", "region": "경기·인천", "sigungu": "용인시", "address": "경기 용인시 기흥구 흥덕1로 5-14 1,2층", "recommender": "심주경", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n수원하이테크센터 공사때 점심회식으로 방문", "menu": "고시순대국, 반찬으로 나오는 고사리절임을 순대에 올려먹으면 꿀맛/순대국 불호인 친언니랑 갔었는데 국물까지 다 먹더군요", "tips": "주차공간이 협소하여 점심시간때에는 길가에 주차해야할 수 도있습니다.", "lat": 37.24377, "lng": 127.179228}, {"id": 134, "name": "매화골 뚝딱 김치찌개", "region": "경기·인천", "sigungu": "용인시", "address": "경기 용인시 기흥구 마북로 159 한성프라자", "recommender": "정오현", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’\n용인 배구단 체육관 앞 시내 사거리에 있는 삼겹살 집인데 모든 선수들 코칭스탭분들이 최고 맛집이라고 해서 가봤는데 제가 먹어본 삼겹살 중에 최고였습니다.", "menu": "김치랑 구워먹는 삼겹살, 그걸 다먹고 먹는 볶음밥이 예술입니다.", "tips": "정보 없음", "lat": 37.241993, "lng": 127.181498}, {"id": 135, "name": "운길산 다보록", "region": "경기·인천", "sigungu": "남양주시", "address": "경기 남양주시 조안면 북한강로301번길 18", "recommender": "현정희", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n수종사 방문 후 식사", "menu": "해물수제비, 미나리전", "tips": "등산객이나 라이딩 후 방문객이 많으니 식사 시간에 웨이팅이 있을 수 있다. 두물머리나 양수리, 수종사 등 나들이 후 방문하기 좋다.", "lat": 37.637232, "lng": 127.212563}, {"id": 136, "name": "진미오겹살", "region": "충청·대전", "sigungu": "유성구", "address": "대전 유성구 지족동 906-2", "recommender": "박성진", "desc": "명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n회식", "menu": "오겹살", "tips": "주차는 가게 주변 도로 주차 가능", "lat": 36.352937, "lng": 127.382895}, {"id": 137, "name": "오감", "region": "호남", "sigungu": "군산시", "address": "전북 군산시 미제길 29", "recommender": "이윤정", "desc": "눈치 안 보고 편하게 먹는 ‘혼밥/혼술 명당’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’\n동생의 추천", "menu": "뼈 없는 갈비탕", "tips": "네이버에는 토,일 휴무라고 되어 있습니다.", "lat": 35.968907, "lng": 126.740111}, {"id": 138, "name": "을밀", "region": "서울", "sigungu": "마포구", "address": "서울 마포구 숭문길 24 1층", "recommender": "나경록", "desc": "출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n지인 소개", "menu": "물냉면(거냉(얼음x) 양많이로 주문하면 좋습니다.)", "tips": "여름 점심에는 웨이팅이 길어, 식사시간을 넉넉하게 할애해야 합니다.", "lat": 37.563374, "lng": 126.898523}, {"id": 139, "name": "광릉불고기 월곶", "region": "경기·인천", "sigungu": "시흥시", "address": "경기도 시흥시 월곶동 488-4", "recommender": "이영욱", "desc": "맛있는 연탄 불고기 먹고 싶을때\n월곶에코피아 놀러갔다가", "menu": "광릉숯불고기 백반", "tips": "연탄 불고기라서 시간이 오래 걸려 3인가면 4인분 시키면 좋습니다. 2인이면 3인분", "lat": 37.376856, "lng": 126.803326}, {"id": 140, "name": "부강옥 세종부강본점", "region": "충청·대전", "sigungu": "세종특별자치시", "address": "세종특별자치시 부강면 부강외천로 103 1층 부강옥", "recommender": "정경석", "desc": "눈치 안 보고 편하게 먹는 ‘혼밥/혼술 명당’ | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’\n세종특별자치시 금빛노을교 현장 근처 방문", "menu": "순대국(특)", "tips": "점심시간 11시30분이전에 가야 웨이팅이 없습니다. 주차는 맡은편 건너에도 가능하고 항상 피크시간때 이전에 방문하는게 좋습니다.", "lat": 36.478179, "lng": 127.289839}, {"id": 141, "name": "능곡할머니 북어탕", "region": "경기·인천", "sigungu": "고양시", "address": "경기 고양시 덕양구 토당로 66-15 1층", "recommender": "윤진혁", "desc": "전날 마신 술이 싹 내려가는 ‘해장 종결지’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n대곡~소사 복선전철 민간투자시설사업 1,2공구", "menu": "북어탕 국물이 최고입니다. 두부를 꼭 추가해서 드시다가 마지막에 라면사리를  추가해 주세요!", "tips": "구도심 마을에 있는 식당이라 주차여건이 좋지 않습니다. 식당을 조금만 지나면 공터가 있으니 조금 걸으시더라도 공터쪽에 주치후 이동하시면 좋습니다!", "lat": 37.660141, "lng": 126.829629}, {"id": 142, "name": "한서방칼국수", "region": "강원", "sigungu": "태백시", "address": "강원 태백시 강원남부로 468", "recommender": "강석민", "desc": "정말 진한 닭칼국수에 보리밥 한공기 쓱 말아 먹으면 몸이 보양되는 '한방요리'\n대학교 다녔을 때 근처 유명한 칼국수 집이 있다하여 알게됨", "menu": "닭칼국수에 보리밥 한공기 추가", "tips": "강원도 태백이다 보니 많이 멀지만 주변 갈 일 있으면 꼭 가보세요! 진짜 닭칼국수의 끝판왕 입니다.", "lat": 37.165174, "lng": 128.983712}, {"id": 143, "name": "산청돼지국밥, 대면당 , 불난버섯집", "region": "경기·인천", "sigungu": "진주시", "address": "산청돼지국밥 : 경남 진주시 창렬로 71 , 대면당 : 경남 진주시 진주대로1163번길 9 1층, 불난버섯집 : 경기 평택시 고덕면 고덕북로 63", "recommender": "이정훈", "desc": "바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n산청돼지국밥, 대면당 : 고향 / 불난버섯집 : 현장근무 시 알게", "menu": "돼지국밥, 3곱 국수, 버섯매운탕에 제육무침 필수!", "tips": "웨이팅은 회전율이 높아 길지 않은 편", "lat": 37.034908, "lng": 127.063243}, {"id": 144, "name": "무등골", "region": "호남", "sigungu": "북구", "address": "전남광주 북구 운용로 65", "recommender": "이수훈", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’ | 미리 예약시 어떤 음식도 다 되는 실비집 느낌 가게 / 생선조림, 민물고기 탕이 주 메뉴이며 솥밥으로 든든한 한끼식사 | 바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n고향에 있는 대학교 교수님, 대학원생 맛집", "menu": "메기탕, 빠가탕, 갈치조림, 병어조림", "tips": "최소 1시간 전 미리 연락을 주어야 합니다(점심 장사는 예약만 받을때가 있습니다.)", "lat": 35.162269, "lng": 126.849338}, {"id": 145, "name": "강릉 명성옥", "region": "강원", "sigungu": "강릉시", "address": "강릉시 노암등길 92 (경포중학교 앞)", "recommender": "김성택", "desc": "한여름 기력이 떨어졌을때, 매서운 추위로 꽁꽁 언 몸과 마음을 녹이고 싶을때, 환절기 건강을 유지하기 위해 찾아가고 싶은 집\n강릉 부임후 지인의 소개로 방문", "menu": "설렁탕(소면 별도 제공), 우족탕(소면 제공X)", "tips": "매일 11시 OPEN, 재료 소진시까지만 영업(오후 3~4시경) 이후 다음날 재료 준비로 CLOSED.", "lat": 37.751289, "lng": 128.874313}, {"id": 146, "name": "주천묵집", "region": "강원", "sigungu": "영월군", "address": "강원 영월군 주천면 송학주천로 1282-11", "recommender": "송승우", "desc": "가족과 여행가서 점심\n영월 단종 테마 여행 가다가 원주민의 추천", "menu": "산초 두부 구이", "tips": "정보 없음", "lat": 37.179728, "lng": 128.464069}, {"id": 147, "name": "부암갈비", "region": "경기·인천", "sigungu": "남동구", "address": "인천 남동구 용천로 149", "recommender": "유정일", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’ | 출장자/타지 손님 오면 무조건 데려가는 ‘손님 코스’\n인천건설기술교육원 교육 당시 인근 맛집으로 추천받음", "menu": "돼지생갈비, 갈치속젓볶음밥", "tips": "웨이팅이 어마무시해졌음. 식사시간을 피해서 방문해야 그나마 웨이팅이 순조로워짐", "lat": 37.457397, "lng": 126.703296}, {"id": 148, "name": "박선희황태어글탕 월평직영점", "region": "충청·대전", "sigungu": "서구", "address": "대전 서구 한밭대로707번길 30", "recommender": "오범균", "desc": "바쁜 일정 속 빠르고 든든하게 먹는 ‘파워 점심’\n유관기관, 현지업체 추천", "menu": "황태어글탕", "tips": "11시30분, 우리회사 점심시간대", "lat": 37.54693, "lng": 126.676413}, {"id": 149, "name": "뜯고기 신용산본점", "region": "서울", "sigungu": "용산구", "address": "서울 용산구 한강대로7길 30-16 1층 (한강로3가)", "recommender": "정유리", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’ | 명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’\n인스타 맛집 추천을 통해 알게되었습니다.", "menu": "쪽갈비 간장맛이 추천 메뉴이고 사이드로 물쫄면은 필수입니다.", "tips": "웨이팅이 꽤 있는 편이라 방문 전 캐치테이블 예약을 추천합니다.", "lat": 37.532021, "lng": 126.986477}, {"id": 150, "name": "또순이네집", "region": "서울", "sigungu": "서울시", "address": "서울시 영등포구 양평동 4가 81", "recommender": "조윤서", "desc": "고된 하루 끝, 동료들과 땀 흘리고 마시는 ‘퇴근 후 회식’ | 명절 귀성길/ 나들이에 가족·부모님 모시고 가기 좋은 ‘가족 맛집’ | 전날 마신 술이 싹 내려가는 ‘해장 종결지’\n저희 아빠가 제일 좋아하던 식당이셨어요 콜레스트롤 높으셔서 소고기 술 잘 못드셧는데 여기 한달에 한번 약간 치팅데이같이 가시던곳!", "menu": "여기 된장찌개가 진짜 맛있어요", "tips": "언제 가도 북적이지만 진짜 맛있어요 웨이팅은 자리가 넓어서 거의 없고 주차는 못해요 된찌 포장이 되서 좋아요 ㅎㅎ가보세요다들", "lat": 37.523002, "lng": 126.899265}];
+const DATA = [{"id":1,"n":"노형자연산횟집","a":"제주시 노형동 2526-2","r":"제주","m":"그날 잡은 제주산 자연산 회, 양식은 취급하지 않습니다. 인당 3~4만원 정도. 육지의 횟집처럼 화려한 밑반찬이 나오는 집은 아닙니다. 하지만 나오는 몇가지 밑반찬은 모두 맛있습니다. 마지막에 나오는 자연산 생선구이와, 매운탕이 일품입니다.","b":"제주신화월드 현장 근무시, 집근처(제주시, 공항근처) 동네 횟집입니다.","t":"","c":["손님 코스"],"x":"제주도에 여행와서 바가지 쓰지 않고 진정한 자연산 회를 저렴하게 먹고 싶을때.(시내에 있어 바다는 보이지 않습니다. 제주도민들이 좋아하는 횟집)","p":"홍승모"},{"id":2,"n":"옹심이 칼국","a":"경북 울진군 북면 덕구온천로 678","r":"영남","m":"옹심이 칼국수, 파전, 막걸리 등 모두 맛있는데요. 그중에서도 무채와 곁들여 먹는 파전 꼭 추천드립니다.","b":"고향 맛집!","t":"특별한 팁은 없어요. 시골이라 사람 많으면 그냥 기다리세요. 기다린 보람이 있으실거에요.","c":["가족 맛집"],"x":"","p":"박효수"},{"id":3,"n":"돌바우횟집","a":"강원도 양양군 매바위길 51","r":"강원","m":"자연모듬회(그 전날 낚시로 잡은 회로 메뉴가 구성됨). 중자만 먹어도 4명이 배가 부릅니다....","b":"강원도 출장 중 양양 해안도로를 따라 이동 중 우연히 들린 자연산 횟집","t":"6팀정도만 예약을 받아 사전에 연락 필수. 주인분께서 써빙할 수 있는 여력까지만 예약을 받아 음식의 퀄러티와 서비스가 굿!! 주차는 식당 앞 뿐만 넓은 해안가 공영주차장이 다~","c":[],"x":"동해안 여행 중 \"소박하게 먹을 수 있는\", \"믿을 수 있는\" 자연산 횟집","p":"윤규섭"},{"id":4,"n":"피어커피 성","a":"서울 성동구 광나루로4가길 24, 1층","r":"서울","m":"아몬드 크로아상과 함께 먹는 플랫화이트","b":"힙하고 핫한 성수지역","t":"차분한 분위기를 좋아하신다면 조금 일찍 움직이시면 좋아요. 오후가 될 수록 사람들이 많아 집니다.","c":[],"x":"내가 더 이상 젊지 않다고 느껴지거나 힙해지고 싶을 때","p":"박현"},{"id":5,"n":"뜰이있는집","a":"충북 제천시 하소천길 176","r":"충청·대전","m":"해물 모둠장, 보리굴비","b":"직장동료 추천 (충북 단양 휴양소 부근 맛집)","t":"예약 필수, 웨이팅 비추천","c":["가족 맛집"],"x":"","p":"안영탁"},{"id":6,"n":"진미막국수","a":"강원 속초시 설악금강대교로 46-1","r":"강원","m":"동치미막국수","b":"지인의 소개","t":"15:00~16:30 브레이크 타임","c":["가족 맛집"],"x":"","p":"권계환"},{"id":7,"n":"감포생밀","a":"대구 북구 침산남로7길 2-1 감포생밀복","r":"영남","m":"밀복지리","b":"HS 달성공원역 출장","t":"","c":["손님 코스"],"x":"","p":"이승일"},{"id":8,"n":"군산 한일옥","a":"전북특별자치도 군산시 구영3길 63 1층","r":"호남","m":"무우국, 육회비빔밥(육회비빔밥은 소 잡는 날인 평일에만 주문이 가능)","b":"고향 맛집!","t":"주말, 식사 피크시간대에는 웨이팅, 매장 앞 주차 가능(만차일 시 인근 공영주차장 이용), 바로 맞은 편에 영화 8월의 크리스마스 촬영지인 초원사진관 있어 식사 전후 둘러보기 좋음","c":["가족 맛집","파워 점심","손님 코스"],"x":"","p":"김준형"},{"id":9,"n":"한남동 정민","a":"서울 강서구 마곡동로10길 23 대방디엠시티오피스텔2차 1층 104호","r":"서울","m":"해물짬뽕이 단연 1등!! 우육면도 독특한 풍미와 함께 베리굿!!!","b":"현장 근처 우연히 지나가다 \"짜장면, 소주 없음\" 이라는 문구가 특이하여 발견.","t":"규모가 작아서 4명이상은 불가합니다. 정말 소주 안팔고 연태고량주만 팔아요. 15~17:30 브레이크 타입 있습니다.","c":["해장 종결지"],"x":"","p":"강철호"},{"id":10,"n":"리애","a":"강남구 선릉로16길 6","r":"서울","m":"숙성된 돈까스의 부드러운 맛 로스까스, 히래까스","b":"동내 맛집 우연히 알게됨","t":"점심시간시 웨이팅 발생 오픈런 또는 점심시간 이후 방문 추천, 주차는 불가능","c":["손님 코스"],"x":"","p":"송경훈","q":"서울 강남구 선릉로16길 6"},{"id":11,"n":"염포오리탕","a":"울산 북구 방어진순환도로 1393 1층","r":"영남","m":"오리탕 단일 메뉴, 볶음밥은 꼭 드세요.","b":"고향이기도 하고 울산 H-DOCK 현장의 동기와의 만남 및 울산신항 남방파제 시절에도 방문한 맛집. 30년 이상 됨.","t":"매주 일요일 휴무, 조금 자극적일 수도 있지만 맛있고 순살도 선택 가능합니다.","c":["회식 추천"],"x":"","p":"한성협"},{"id":12,"n":"장어집 본점","a":"서울 강동구 가래여울2길 33","r":"서울","m":"대물장어를 합리적 가격에 질좋은 채소(직접 제배)와 함께 즐길수 있음","b":"부모님 소개로 알게 됨, 가족모임/건강회복 에 최적의 장소","t":"예약 필수, 도보 이용 불가, 첫방문시 진입로 유의 (잘못들어가면 올림픽대로)","c":["가족 맛집"],"x":"몸이 허할때 기력 보충","p":"김현태"},{"id":13,"n":"팔복황제누룽지탕 분당직영점","a":"경기 성남시 분당구 구미로192번길 4 1층","r":"경기·인천","m":"해물 누룽지탕","b":"거주지 근처 맛집","t":"점심에는 웨이팅이 꽤 있고, 저녁에는 크게 웨이팅이 없습니다. 식당가가 모여있어서 주차는 쉽습니다.","c":["가족 맛집","손님 코스"],"x":"","p":"임창근"},{"id":14,"n":"북한강돌짜장","a":"경기도 남양주시 화도읍 북한강로1112번길 6","r":"경기·인천","m":"돌짜장","b":"해비치cc 출장 중","t":"여러명이 함께 가서 돌짜장과 갈비찜을 같이 드세요.","c":["파워 점심"],"x":"","p":"우승우"},{"id":15,"n":"완도머스","a":"대전광역시 유성구 신성로 103","r":"충청·대전","m":"굴전복국밥 + 문어숙회","b":"선박해양플랜트연구소 출장 중 방문","t":"점심시간보다 약간 일찍 혹은 약간 늦게 가시면 좋습니다.","c":["회식 추천","가족 맛집","파워 점심","해장 종결지","손님 코스"],"x":"","p":"박창범"},{"id":16,"n":"그집순대국","a":"경기 동두천시 장고갯로 157 제1동(생연동)","r":"경기·인천","m":"뽈살순대국","b":"동두천 지역 주민","t":"건물 뒷쪽 주차장 넓어서 편해요.","c":["가족 맛집","파워 점심"],"x":"","p":"이수영"},{"id":17,"n":"여의도양지탕본관","a":"서울 영등포구 국회대로70길 7","r":"서울","m":"양지탕에 마나라는 특수부위가 들어가는데 호불호가 있겠지만 저는 완전 호입니다. (귀한 부위)","b":"아내와 서울둘레길14코스(약 2시간 반)를 걷고 집으로 돌아가는 길, 버스 환승하는 곳에서 배가 고파 음식점을 찾다가 무작정 들어간 집입니다. 이제는 이거 먹으려고 둘레길을 가요~","t":"저는 주말에 둘레길 한코스 걷고 집에 돌아가는 길에 들르는 집이라 다른 시간대는 잘 모르겠네요. 여의도라서 점심엔 사람이 많을 것 같습니다.","c":[],"x":"땀 흘린 후에 찾아가는 맛집","p":"이규헌"},{"id":18,"n":"청우고깃간 정육식당","a":"전남광주 순천시 중앙초등길 165 1층(순천역 인근)","r":"호남","m":"안심 구이","b":"율촌산단 근무 시 아는 공무원이 추천해줌 / 준공 즈음 알게 되어 현장을 떠나기 전 세번 밖에 못 먹고 온게 한으로 남아 있음","t":"한적한 시간에 방문하여 꼭 사장님이 직접 구워주는 안심 구이를 먹어야 함.","c":["가족 맛집","손님 코스"],"x":"","p":"이용석"},{"id":19,"n":"마포주물럭","a":"서울 동대문구 고산자로34길 11","r":"서울","m":"한우 주물럭, 한우 육회","b":"HS 청량리 메트로블 현장 출구 앞 2M에 위치 (완공된 지금도 바로 앞에 위치) / 숨겨진 한우 주물럭 노포 맛집입니다","t":"주차는 어렵습니다, 노포 맛집 애용자들에게 추천하고 싶습니다","c":["회식 추천","손님 코스"],"x":"","p":"김권수"},{"id":20,"n":"양반수제비","a":"대전 서구 문정로90번길 21","r":"충청·대전","m":"순한수제비와(꼭 얼큰수제비 말고 순한 수제비 먹어야 함) 감자채전","b":"힐스테이트 둔산 현장","t":"주차는 주변 골목에 해야 함. 방문한 김에 주변의 대전 명물 성심당을 롯데백화점에 가서 방문 가능 ~!","c":[],"x":"빠르고 맛있게 별미로 먹는 점심 맛집","p":"이연우"},{"id":21,"n":"검단 두손칼국수","a":"인천 검단구 원당대로 99 .현빌딩 103호","r":"경기·인천","m":"단일메뉴 - 칼국수","b":"하나드림타운그룹헤드쿼터신축현장 근무시 발견!","t":"영업시간이 오전11시~오후1시, 즉 2시간만 영업합니다. 웨이팅 당연히 있지만 회전율이 매우 빠릅니다. ㅎㅎ 주차는 인근 도로가에 세웁니다. 대기명단에 이름/인원수만 적으면 됩니다. 자리에 앉자마자 칼국수와 보쌈메뉴가 나옵니다. 흑미밥은 셀프코너에서 양껏 드시면 됩니다. 이 모든것이 1인 7000원! ㅎㅎ","c":[],"x":"깔끔한 칼국수? 든든한 보쌈? 그냥 둘 다 먹어!","p":"고현석"},{"id":22,"n":"방화동 교동짬뽕","a":"서울 강서구 금낭화로24나길 21 이루미팰리스 101호","r":"서울","m":"불짬뽕! 찹쌀탕수육도 너무 맛있으니 꼭 같이 드셔보세요.","b":"와이프와 매운짬뽕 매니아라 여기저기 돌며 찾아내었어요!","t":"11시 오픈런 미리 해야 안 기다리고 먹을 수 있어요! 주차는 주변 골목에!","c":["해장 종결지"],"x":"","p":"주현수"},{"id":23,"n":"처인성토속음식","a":"경기 용인시 처인구 남사읍 처인성로827번길 116-3","r":"경기·인천","m":"묵은지생갈비전골","b":"힐스테이트 용인마크밸리 현장 근처에 있고, 주변에 가족끼리 놀러가는 길에 들려서 맛있게 먹었습니다(허영만 백반기행 촬영지)","t":"월요일은 휴무 입니다.","c":["손님 코스"],"x":"","p":"김민준"},{"id":24,"n":"체나레인서촌","a":"서울 종로구 자하문로7길 76 1층","r":"서울","m":"블랙뽈뽀, 스콜리오, 트로플뇨끼, 보테르가, 봉골레 등 다 맛있습니다.","b":"평소 이탈리안 음식을 좋아하던 중 지인의 소개로 알게 되었습니다. 주머니속에 넣고 다니는 든든한 히든카드 ^^","t":"이른 저녁시간 해질력 또는 저녁 시간 이후 와인한잔과 간단한 식사에 어울리는 곳입니다. 주차는 인근 공영주차장 이용 가능하더라고요","c":[],"x":"정통 이탈리안 음식이 먹고싶을때 또는 가족 및 지인과의 품격있는 오붓한 식사장소로 추천합니다.","p":"이승준"},{"id":25,"n":"군위식당","a":"대구시 중구 경상감영길 101 1층","r":"영남","m":"돼지국밥 과 수육","b":"HS대구역, HS도원센트럴, HS동인센트럴, HS대구역오페라 등 주변 현장 중심에 있음. 성시경먹을텐데 및 싸이방문으로 더 유명해짐.","t":"감영공원 주차 가능.","c":["회식 추천","혼밥 명당","파워 점심"],"x":"","p":"이우현"},{"id":26,"n":"간이횟집","a":"서울 송파구 백제고분로7길 52 1층","r":"서울","m":"광어+우럭","b":"집근처 맛집","t":"횟감 아래에 무채를 깻잎쌈에 듬뿍 올려 특제 장과 함께 먹습니다.","c":["회식 추천"],"x":"","p":"채영호"},{"id":27,"n":"유진","a":"전남광주 담양군 금성면 시암골로 17","r":"호남","m":"메뉴는 청둥오리전골 단일메뉴로 인원수에 맞게 양만 정하면 됩니다. 일반 오리가 아닌 식용청둥오리로 처음에는 국물이 끓으면 같이 주문 야채를 숨만 죽여서 소스(식당소시+들깨가루)를 찍어서 야채 먼저 먹고 있으면 고기가 익습니다. 그러면 익은 고기와 함께 야채와 같이 드시고 나서 국물은 밥과 함께 적셔서(또는 말아서) 같이 드시면 정말 보양식으로 최고입니다. 또한 고기를 다 드시고 나면 국물에 쑥을 넣어주시는데 그 후에 국물은 아예 다른 맛으로 변해서 진하고 맛있는 국물이 됩니다.","b":"부모님과 어릴때부터 다녔던 곳","t":"주말에는 웨이팅이 많아서 가능한 오픈런 하시구요~평일에도 조금 일찍 가시는걸 추천드립니다. 주차장은 넓어서 크게 문제가 없고 어르신들이 대부분이시라는건 정확히 맛집이겠죠?^^","c":["가족 맛집","손님 코스"],"x":"","p":"성윤호"},{"id":28,"n":"우판사판","a":"경기도 고양시 덕양구 은빛로29번길 8 (화정동 929-2)","r":"경기·인천","m":"소양념 갈비 + 냉면","b":"처가집 고향으로 아이가 좋아하는 맛집","t":"식사시간이 아님에도 불구하고 웨이팅이 있을 맛집. 경기도 화정역 3번출구에서 도보 약 5분 거리","c":[],"x":"미취학 아이가 좋아할 만한 맛있는 소양념 갈비집","p":"김덕기"},{"id":29,"n":"부영도가니탕","a":"서울 종로구 북촌로 141","r":"서울","m":"도가니탕","b":"점심시간에 아내가 아이들과 오면 항상 같이 가는 식당입니다. 아이들이 먹을 수 있는 회사 근처 곰탕집을 알아보다가 알게된 집인데 남녀노소 모두다 좋아할만한 메뉴에 바로 앞 공영주차장과 삼청공원이 있어 이용하기 편라합니다.","t":"아이들꺼는 안시켜도 따로 한그릇 더 줍니다","c":["파워 점심"],"x":"","p":"김대왕"},{"id":30,"n":"청아가든","a":"경북 울진군 북면 맞덕구길 2","r":"영남","m":"오리능이한방백숙, 모든 반찬 맛집","b":"신한울 원자력 3,4호기 건설현장 맛집","t":"덕구온천 인근으로 식당 셔틀이용 가능","c":["가족 맛집"],"x":"","p":"정연재"},{"id":31,"n":"상아식","a":"전남광주 여수시 어항단지로 21","r":"호남","m":"원조통장어탕","b":"처가집에서 가까워서 명절 연휴에는 가족들과 꼭 방문하는 식당","t":"주차는 인근 엑스포해수피아 주차장에 가능함, 항상 손님이 많습니다.","c":["가족 맛집"],"x":"","p":"임현수"},{"id":32,"n":"효자문 식당","a":"전북 전주시 완산구 전주객사4길 43-24 효자문","r":"호남","m":"불갈비를 시키면 반갈비탕이 후식으로 나옵니다! 무조건 불갈비를 시키세요! 불이라고 해서 매울 거 같지만 사실 아주 달달해서 애기들도 먹기 좋답니다! 꿀꺽 + 주차 자리도 있어요.","b":"고향 맛집!","t":"주차 자리도 있으니 걱정말고 가십쇼~~~","c":["회식 추천","가족 맛집","손님 코스"],"x":"","p":"강은비"},{"id":33,"n":"황생가칼국수","a":"북촌로5길 78","r":"서울","m":"칼국수,콩국수,만두,보쌈","b":"본사주변","t":"11시반 땡 하자마자 가면 30분정도 웨이팅","c":["혼밥 명당","파워 점심"],"x":"","p":"민환석","q":"서울 종로구 북촌로5길 78"},{"id":34,"n":"감나무집","a":"부산광역시 금정구 범어사로 334","r":"영남","m":"오리불고기 전문점. 소금 -> 양념 순으로 주문 추천. 대표 메뉴는 양념으로, 부추를 산더미 같이 올린 후 숨을 죽여 오리고기와 함께 먹으면 씹는 맛이 일품임.","b":"고향인 부산의 로컬 맛집으로, 적어도 20년 이상 온가족이 함께 즐겨온 식당임","t":"부산의 대표 관광지 중 하나인 범어사 바로 앞에 있으며, 바로 근처에 경치 좋은 멋진 카페도 많이 있어 범어사 관광 → 감나무집 → 카페 코스를 추천.","c":["가족 맛집","손님 코스"],"x":"","p":"이광연"},{"id":35,"n":"할머니추어탕 신월2호점","a":"서울 양천구 가로공원로 146","r":"서울","m":"추어탕","b":"대장~홍대 광역철도 1공구 현장품질업무 지원 출장 갔다가 점심시간에 품질직원분들과 해당 추어탕집을 갔습니다. 그런데 알고보니 같이 간 출장자의 맛집이면서 현장의 안전직원분들도 맛있다고 한 집이었네요.","t":"점심시간에 사람이 많으니 조금 일찍가야되고, 늦으면 주차하기가 조금 어려울 수도 있습니다. 인근 주택가 골목이 협소한 편이긴 한데 주차 안내해주시는 분이 계십니다.","c":["파워 점심","해장 종결지","손님 코스"],"x":"","p":"이영준"},{"id":36,"n":"백로식당 본점","a":"청주시 성안로 47-1 1층","r":"충청·대전","m":"돼지고기 양념구이 (단일메뉴) 먹고 볶음밥 필수","b":"고향 맛집!","t":"청주 내 체인점이 있으나, 무조건 본점 추천","c":["손님 코스"],"x":"","p":"김용석"},{"id":37,"n":"우솔","a":"서울 종로구 율곡로5길 14","r":"서울","m":"모듬코스 + 짜파게티, (1인분에 150g)이라고 되어있지만 고기를 계속 주셔서 150g 1인분이면 충분한 맛집","b":"회식을 위해 맛있는 집을 찾다가 찾다가 찾다가 진짜 찾다가 겨우 찾은 맛집입니다.","t":"인원이 많으면 힘든데 12명 정도면 전체대관을 해줘요!","c":["손님 코스"],"x":"","p":"이정욱"},{"id":38,"n":"고을식당","a":"제주도 서귀포시 대정읍 인성리 251-1(일주서로 2258)","r":"제주","m":"고기국수+돔베고기","b":"제주신화월드 워터파크 근무 당시에 즐겨 찾던 고기국수+돔베고기 맛집입니다. 제주도 현지인분들께서는 멸치국물 베이스의 고기국수가 오리지날이라고 해요!(설렁탕 베이스 아님) 돌관현장에서 근무하면서 힘들때마다 즐겨찾았던 곳인데, 이제는 제주도 여행갈때마다 가게 되는 맛집이 되었습니다.","t":"주차장이 별도로 있는건 아니어서, 인근 도로가에다가 주차를 해야해요. 그부분만 아니면 너무 좋은 맛집입니다!","c":["가족 맛집","파워 점심","손님 코스"],"x":"","p":"신정무"},{"id":39,"n":"들렁모루 점심","a":"서귀포시 서홍로358번길 27-18","r":"제주","m":"오리탕","b":"처가집이 제주도인데 제주도민만 알고 있는 맛집입니다 ^^","t":"","c":["손님 코스"],"x":"","p":"안재성"},{"id":40,"n":"두남리들기름육회비빔 본점","a":"충남 천안시 동남구 큰시장길 41, 1층","r":"충청·대전","m":"들기름육회비빔밥(단일 메뉴임)","b":"고향 맛집!","t":"주차가 매우 불편하니 주변 공영주차장에 주차하고 3~4분 걸어서 가는것을 추천, 점심 시간대에는 자리가 매우 높은 확률로 없으니 12시 이전에 가는 것을 추천, 하루에 정해진 수량만 판매해 오후 3시 이후에는 문 닫을 수 있음","c":["파워 점심"],"x":"","p":"유제하"},{"id":41,"n":"한영식당","a":"대전광역시 중구 계룡로874번길 6","r":"충청·대전","m":"닭볶음탕 ★단일메뉴★ + 볶음밥은 말하지않아도 추가 아니겠습니까!!!","b":"대전 지역 현장들을 출장하던 중에 현장에서 추천받아 방문하였습니다.","t":"일방통행 도로로 보통 가게 앞, 인근에 주차해야하는 주차난이도 \"上\", 하지만 도보 5분이내 서대전네거리역 앞 \"오류동주차장\"이용하면 60분에 3천원!!!!!","c":[],"x":"호불호 없는 메뉴 \"닭볶음탕\"의 성지로서 맛점+맛저까지 가능한 올라운더 + 블루리본 등재 인정맛집","p":"이현승"},{"id":42,"n":"통나무집","a":"경기도 과천시 새술막길 38 중앙상가 1층 105호","r":"경기·인천","m":"강력한 화구에서 나오는 얼큰한 부대찌개 강추 / 저녁에는 족발과 함께 먹다가, 부대찌개로 갈아타면 됩니다.","b":"저희 동네 맛집입니다.","t":"일요일 간혹 영업X / 주차는 노상공영주차장 이용","c":["해장 종결지"],"x":"","p":"최호형"},{"id":43,"n":"인사 안집 본","a":"서울 종로구 인사동14길 24-1 인사안집","r":"서울","m":"옛날 보리밥나물비빔밥과 소불고기 15,000원, 타 식당에서는 두 배 정도의 가격에 가능한 맛과 서비스..","b":"본사 인근 인사동","t":"2명 이상, 예약 필수, 셀프 채소 바 운용으로 풍족히 맛있게 즐길 수 있는 맛집.","c":[],"x":"가성비 가심비 뛰어난 한정식 맛집","p":"이일규"},{"id":44,"n":"애향식당","a":"경기도 가평군 가평읍 장터길 3-16","r":"경기·인천","m":"여럿이 가면 칼국수/칼만두(바지락, 들깨)+오징어/두루치기 볶음 조합으로, 혼자 가면 잣콩국수(여름), 만두국(상시) 추천","b":"고향 맛집!","t":"주말에 영업을 안하는 경우가 있으니 영업 시간 확인 필요, 특히 가평 5일장(5,10,15,20,25,30)으로 주차 불가능한 경우 발생(가평잣고을 시장주차장)","c":["혼밥 명당"],"x":"","p":"장한규"},{"id":45,"n":"평화식당","a":"경남 창원시 마산합포구 월영북로 17","r":"영남","m":"생아구찜, 아구불고기 다 맛있음","b":"고향 맛집!","t":"아구찜 주제에 웨이팅 무조건 있을겁니다. 재료 소진도 자주 있으니 방문 전 무조건 전화해보긔~★","c":[],"x":"아구찜에 막걸리 한사바리 싸~~앆~~!","p":"이슬기"},{"id":46,"n":"부암갈비","a":"인천 남동구 간석동 130-12 (용천로 149)","r":"경기·인천","m":"생갈비 단일메뉴 인데, 갈치속젓비빔밥을 고기 주문할 때 미리 시키셔야 고기 구워서 나올 때 같이 먹을 수 있어요","b":"어린 시절 살던 동네 쵝오 맛집 (서울에 살고있는 지금도 종종 갑니다 . . . )","t":"옛날엔 웨이팅 지옥이었는데. 요즘은 덜한것같고.. 에어컨나오는 쾌적한 웨이팅 장소가 따로 마련돼있어요 주차도 문제없음","c":[],"x":"인천 최고 맛집. . . 인천에 가신다면 추천","p":"부지현"},{"id":47,"n":"백승희의들밥","a":"경기도 광명시 밤일로 79 1층","r":"경기·인천","m":"들밥 한상차림, 명인 보리굴비, 명인 간장게장","b":"집 근처 소문난 맛집","t":"주말엔 예약 필수, 2인~4인 세트만찬 추천","c":["가족 맛집"],"x":"","p":"이세철"},{"id":48,"n":"안목 서면점","a":"부산 부산진구 부전동 534-2","r":"영남","m":"대표 : 돼지국밥, 숨은 메뉴 : 냉수육무침, 함께 주문하면 좋은 메뉴 : 복순도가 막걸리 (한 잔도 주문 가능)","b":"HS 가야, 범천 1-1구역 재개발, HS 사직아시아드 출장 시 서면에서 숙박하면서 방문하게 됨","t":"육수 무한리필이니, 리필해서 드세요.","c":["혼밥 명당","해장 종결지"],"x":"","p":"김정희"},{"id":49,"n":"당가원","a":"부천시 소사구 양지남로 39","r":"경기·인천","m":"차돌박이짬뽕, 탕수육, 깐풍기","b":"일루미스테이트 현장 근무","t":"점심시간 웨이팅이 있어, 영업시작(11시30분) 30분 전에 가길 추천합니다.","c":["해장 종결지","손님 코스"],"x":"","p":"박승열"},{"id":50,"n":"중화반점","a":"대구 중구 중앙대로 406-12","r":"영남","m":"야끼우동","b":"서울 출신 배우자도 반한 고향 맛집","t":"웨이팅이 있어도 가게가 넓고 회전이 빨라서 대기시간이 생각보다 길지 않습니다.","c":["가족 맛집","손님 코스"],"x":"","p":"안용수"},{"id":51,"n":"골뱅이상회","a":"경기 하남시 미사강변동로 95 1층 1006호","r":"경기·인천","m":"통골뱅이탕","b":"에코미사, 한강미사 견학 시 근처 식당","t":"이른 저녁시간이 웨이팅이 많이 없어 추천드립니다","c":["회식 추천","혼밥 명당","손님 코스"],"x":"","p":"최영환"},{"id":52,"n":"옹시미 경복궁점","a":"서울 종로구 사직로 105","r":"서울","m":"옹시미칼국수, 들기름막국수","b":"아내의 지인을 통해","t":"점심엔 주말/주중 상관없이 웨이팅이 있고 별도의 예약시스템은 없어 줄을 서야 합니다.","c":["파워 점심"],"x":"속 따뜻하고 녹진한 국물요리가 먹고 싶을때.","p":"임경택"},{"id":53,"n":"문래돼지불백","a":"서울 영등포구 당산로 2-1 1층 문래돼지불백","r":"서울","m":"불백","b":"집근처","t":"24시간 아무때나 가면 됩니다.","c":[],"x":"뭐 먹지? 고민스러울때 아무 생각 없이 갈 수 있는 집","p":"박대우"},{"id":54,"n":"일월카츠","a":"서울 종로구 계동길 17","r":"서울","m":"상등심 돈까스가 제일 맛있습니다. 안심도 몇점 주거든요. 소금에 찍어먹다가 트러플소스에 찍어먹음 2배 맛있습니다. 자리가 좁아서 바 형식인게 유일무이한 단점인데 그만큼 맛있어서 양해할 수 있습니다.","b":"회사 바로 앞에 생겨서 먹게 되었어요","t":"캐치테이블 원격 웨이팅으로 걸고 점심시간에 가서 먹으면 좋습니다.","c":["파워 점심"],"x":"개인적으로 바삭한 돈가스에 든든한 밥과 국까지. 친구오면 데려가는 안국 최고 맛집입니다","p":"여은숙"},{"id":55,"n":"큰마을영양굴밥","a":"충남 서산시 부석면 간월도1길 65","r":"충청·대전","m":"영양굴밥, 굴 파전","b":"현대건설 서산 연수원 방문시 찾아가는 맛집!!","t":"웨이팅이 길수 있으니 기다리는 동안 간월도 구경하고 오세요","c":["가족 맛집"],"x":"","p":"이규범"},{"id":56,"n":"우정","a":"서울 강남구 도산대로55길 23","r":"서울","m":"한우곱창전골과 이곳에서만 맛볼 수 있는 꼬수운 등골! 곱창전골은 다 먹고 볶음밥을 꼭 시켜서 드세요.. 스지찜도 완전 맛있습니다......","b":"나만 알고싶은 압구정 아지트였는데.. 이제는 너무 유명해져버린, 오래 전에 우연히 친구와 들렀다가 알게된 맛집입니다.","t":"네이버 예약하고 가면 웨이팅없이 갈 수 있어요 !","c":["가족 맛집","해장 종결지"],"x":"","p":"윤진아"},{"id":57,"n":"대일분식","a":"전북 익산시 창인동1가 131-1","r":"호남","m":"짬뽕라면(전날 술을 드신 애주가 라면 꼭 기본 짬뽕라면 을 드셔야 합니다.), 탕수육(탕수육은 찍먹과 부먹으로 나뉜다 하지만 여기는 부먹스타일 입니다. 후회는 하지 않습니다.)","b":"와이프 고향으로 맛집 탐방 중 이용하게 되었습니다.","t":"공영주차장이 가까워 주차 후 가볍게 걸아갈만 합니다.","c":["가족 맛집","해장 종결지"],"x":"","p":"주종진"},{"id":58,"n":"한우마을","a":"청청남도 서산읍 대산면 대산리 973번지","r":"충청·대전","m":"한우(한우정육식당), 된장찌개 (된장술밥 가능)","b":"현대오일뱅크 HPC Project 수행 시, 회식을 통해 알게 되었음","t":"지역 Local 맛집이어서 특별히 웨이팅은 없으며, 주차는 식당앞에 공터가 있음","c":["가족 맛집"],"x":"","p":"유희영"},{"id":59,"n":"탑골순대국","a":"경기 용인시 수지구 풍덕천로147번길 10-4","r":"경기·인천","m":"순대국","b":"HS수지구청역 / 경기도 1등 순대국밥집으로 유명해서 방문해봤습니다.","t":"고기나오는시간에 맞춰서 가시면 사람은 많지만 방금 나온 머릿고기 먹을 수 있답니다.^^","c":["해장 종결지"],"x":"","p":"이기대"},{"id":60,"n":"돈가네 갈비김치찌개","a":"대전 유성구 학하동로64번길 32 1층","r":"충청·대전","m":"갈비 김치찌개","b":"HS도안리버파크 1단지","t":"미리 예약하고 가면 음식이 빨리 나옵니다.","c":["해장 종결지","손님 코스"],"x":"","p":"황동현"},{"id":61,"n":"고기대장","a":"경기도 고양시 덕양구 신원로 18","r":"경기·인천","m":"본갈비살 - 저렴하고(한우대비, 500g에 89,000원) 부드러운 와규로 입에서 녹는 소고기, 항정살 - 돼지고기 특유의 고소함과 식감","b":"덩네 맛집으로 지인소개","t":"사장님이 친절하셔서 계란찜 더 달라고 해보세요, 방문전에 차 주차 말씀하시면 사장님이 주차게이트 열어주십니다.","c":["회식 추천","가족 맛집"],"x":"","p":"서태원"},{"id":62,"n":"우렁이박사","a":"충남 당진시 샛터로 7-1","r":"충청·대전","m":"우렁덕장, 우렁쌈장","b":"고향이 충남이라 지역 주민 추천 받았습니다.","t":"주차장은 잘되어있는거 같습니다. 서해 고속도로 이용하시면 잠시 들르기 좋습니다.","c":["가족 맛집","손님 코스"],"x":"","p":"문용기"},{"id":63,"n":"이이칸지 청라","a":"인천 서해구 청라커낼로 319번길 9, 1층","r":"경기·인천","m":"믹스(로스+히레) 카츠가 정말 맛있고, 색다른 맛을 찾으시면 미소카츠도 추천합니다. 아사히 생맥주를 비롯한 여러 주류를 팔기 때문에 함께 곁들이면 좋습니다!","b":"하나드림타운 현장에 있을 때, 숙소 바로 앞에 있던 일식 돈카츠 집입니다. 숙소 앞에 있는 다른 돈카츠 집을 가려다가 재료 소진으로 못가고, 큰 기대없이 방문한 곳인데.. 오히려 제가 가려고 했던 돈카츠 집 보다 더 맛있어서 놀란 곳입니다! 알고보니 여기 사장님이 (돈카츠 좋아하는 분들이라면 한번쯤은 가보셨을) 카츠바이콘반에서 배우신 분이더라구요. 하나드림타운 현장에 있으면서 정말 여러번 방문한 또x10 간집!","t":"제가 처음 갔을 때만하더라도 크게 유명하지 않은 집이라서 이러다 망하는거 아닌가 걱정했는데.. 어느순간 입소문을 타고 사람이 많아져서 평일에도 웨이팅을 하는 식당이 되었습니다 ㅠㅠ.. 그래서 식사시간을 조금 피해서 가시면 웨이팅도 없고 갓튀긴 바삭한 돈카츠를 즐길 수 있습니다!","c":["혼밥 명당"],"x":"","p":"양영재"},{"id":64,"n":"진양재순대 삼성","a":"서울특별시 강남구 봉은사로114길 38 1층","r":"서울","m":"순대국밥, 철판볶음","b":"GBC, 공공기여 현장 근처","t":"점심은 11시 30분 이후에 가면 웨이팅 상당함, 저녁에는 웨이팅 없음","c":["회식 추천","파워 점심"],"x":"","p":"김태영"},{"id":65,"n":"장영선원조지례삼거리불고기","a":"경북 김천시 지례면 장터길 64","r":"영남","m":"이 곳에서 꼭 먹어야 하는 대표 추천 메뉴는 양념불고기 입니다. 옛날 노포 느낌의 맛집으로 연탄불에 석쇠 위에 구워먹는 양념불고기는 한번도 안 먹어본 사람은 있어도 한번만 먹어본 사람은 없을 정도로 진한 불맛이 일품입니다. 식사로 같이 주문 가능한 보리밥에 같이 나오는 반찬들과 열무김치, 참기름 살짝 넣어 비벼 먹으면 즉석에서 만들어지는 꽁보리 비빔밥이 완성되며, 양념불고기와 궁합이 아주 잘 맞습니다.","b":"김천 사는 친구 집으로 놀러 갔었다가 김천의 맛집으로 소개 받아 친구랑 같이 저녁으로 먹었던 곳입니다.","t":"주말보다는 평일에 방문하거나 명절 연휴 중 방문드리는 걸 추천드리며, 차를 끌고 와야 하기 때문에 술을 드신다고 하면은 대리기사 필수입니다. 캐치테이블 같은 웨이팅 어플이 없어서 방문 전에 전화로 확인하는 걸 추천드리며 현장 웨이팅이 있는 경우 30분 정도는 예상하고 가셔야 합니다. 식당에서 직접 운영하는 주차장은 없고, 인근 공터에 주차 가능한 곳들이 있으니 주변 주차터를 확인하시는 것이 좋습니다.","c":["회식 추천","가족 맛집"],"x":"","p":"윤기주"},{"id":66,"n":"만복순대국","a":"경기도 안양시 만안구 양화로 159","r":"경기·인천","m":"순대국","b":"부대 근처","t":"주차 안됩니다.","c":["파워 점심","해장 종결지"],"x":"","p":"변준식"},{"id":67,"n":"카페 툇마루","a":"(도로명) 강원 강릉시 난설헌로 232 카페 툇마루 / (지번) 강원 강릉시 초당동 355","r":"강원","m":"대표메뉴 : 툇마루커피","b":"데이트코스로 처음 방문하고 맛에 반해서 가족여행코스로 발전한 커피맛집","t":"웨이팅 순번표 받고, 근처 산책코스 (허균/허난설헌기념공원, 경포아쿠아리움, 아르떼뮤지엄강릉 등) 방문하면 웨이팅 시간이 지루하지 않음","c":[],"x":"든든한 식사 후 달콤한 커피 한잔의 여유~","p":"박종식"},{"id":68,"n":"부성민물매운","a":"충남 천안시 서북구 2공단1로 34 부성민물매운탕","r":"충청·대전","m":"새우어죽 추천 ! 인삼 향을 좋아하는 사람이라면 별미로 인삼어죽 ! 그리고 업체 분 말로는 송어회 맛집이라고 합니다.","b":"업체 출장으로 천안을 방문 했을 당시, 업체 담당자분이 자신있게 어죽 맛집이라고 추천하여 방문하게 되었습니다.","t":"평일/ 주말 점심 피크 시간대만 피해주시면 괜찮을거 같습니다. ( 주차 공간이 협소합니다. ㅜ )","c":[],"x":"어죽 입문자부터 경험자까지 모두 만족 시킬 수 있는 '전국구 어죽 맛집'","p":"오치원"},{"id":69,"n":"해초 양산본점","a":"경남 양산시 삼성3길 17-12 1층","r":"영남","m":"저는 무조건 참가자미+광어 물회를 먹는데요, 오징어도 좋아해서 한치+갑오징어 물회도 강력추천 드립니다~! 그리고 이곳은 나주배 육수를 주는데 이 육수가 진짜 달큰하고 맛있어요~! 냉장고 가득 나주배가 가득한 곳이랍니다. 또 배를 채썰어서 가득 넣어주세요. 물회만 시켜도 매운탕 무조건 기본에 기본찬도 정말 깔끔하고 맛있습니다.","b":"이곳은 제 본가에 계신 부모님 맛집입니다. 쉬는날 내려갈때 매다 부모님이랑 꼭 먹으러 가는 물회집입니다.","t":"당연히 건물 내 지상에 주차장이 있구요~! 여름 성수기엔 항상 점심전부터 사람이 많이 있습니다. 살짝 식사시간대 지나가시면 좋고, 메뉴 자체가 차가운 음식이다 보니 회전율은 좋아서 빨리 자리가 나니 웨이팅은 기다리실만 합니다~! 강추드립니다.","c":["손님 코스"],"x":"","p":"김서연"},{"id":70,"n":"한영식당","a":"대전광역시 중구 계룡로874번길 6","r":"충청·대전","m":"닭볶음탕 (식후 볶음밥이 진짜진짜진짜 맛있습니당)","b":"동료의 추천으로 알게 된 식당으로, 10년째 방문 중 입니다.","t":"양이 많으니깐, 배 안부른 상태로 가세용~","c":["혼밥 명당","손님 코스"],"x":"","p":"조양두"},{"id":71,"n":"뚱이네 포차","a":"충남 서산시 읍내1로 5 뚱이네포차","r":"충청·대전","m":"굴보쌈, 고추장찌개","b":"서산특구 기반시설공사 현장 근무중","t":"보쌈은 2시간전 예약한 사람 한정으로 고기를 하기 때문에 예약 필수","c":["회식 추천","손님 코스"],"x":"","p":"이한솔"},{"id":72,"n":"동원순대집","a":"전주시 완산구 쑥고개로 391 (효자동)","r":"호남","m":"순대국밥","b":"전북 전주시 완산구 쑥고개로 391 동원순대집","t":"주차장 有","c":["해장 종결지"],"x":"","p":"최용현"},{"id":73,"n":"유포리막국수","a":"강원 춘천시 신북읍 맥국2길 123","r":"강원","m":"대표메뉴는 막국수와 편육입니다. 처음에는 비빔막국수로 먹다가 중간부터 동치미 육수를 넣어 물막국수로 먹는 걸 추천합니다.","b":"군 복무","t":"현대건설이 시공한 소양강댐이 근처라 나들이 겸 식당 방문을 추천합니다.","c":["가족 맛집"],"x":"","p":"김창열"},{"id":74,"n":"유진식당","a":"서울 종로구 종로17길 40","r":"서울","m":"평양냉면, 녹두전","b":"본사근무중 우연히 퇴근하다가 줄 서 있는 식당을 발견!!","t":"화요일 휴무","c":["혼밥 명당"],"x":"","p":"지영주"},{"id":75,"n":"청수옥","a":"인천 미추홀구 주승로 84","r":"경기·인천","m":"판모밀과 수육, 육칼","b":"고향 맛집!","t":"주7일 식당 오픈(정기 휴무일 X)이며, 9시 30분 부터 21시까지 영업합니다.","c":["혼밥 명당","가족 맛집"],"x":"","p":"조현우"},{"id":76,"n":"용당횟집","a":"부산 기장군 일광읍 칠암1길 8","r":"영남","m":"붕장어회, 붕장어 구이","b":"울산 샤힌 현장에서 근무중에 붕장어 맛집을 소개 받아 찾아갔습니다.","t":"식사 마치고 칠암사계에서 가지는 한잔의 커피와 휴식","c":["회식 추천"],"x":"","p":"명경미"},{"id":77,"n":"도촌막국수","a":"강원 양구군 국토정중앙면 국토정중앙로6","r":"강원","m":"막국수","b":"아내 친할머님댁에 처음 인사드리러 갔을 때 친할머님과 같이 방문했었던 식당","t":".","c":["가족 맛집"],"x":"","p":"최정재"},{"id":78,"n":"서울뼈구이","a":"서울 동대문구 왕산로 274-1","r":"서울","m":"뼈구이 (맵기 조절 가능하니 선택하시면 됩니다~~) 그리고 날치알 주먹밥과 소주는 함께 주문 부탁드립니다!!","b":"회사분의 추천","t":"늘 웨이팅이 있으니 매운게 먹고 싶은날 1시간차 쓰고 방문해 보는건 어떨까요?!","c":["손님 코스"],"x":"","p":"심승보"},{"id":79,"n":"야마다야","a":"경기도 성남시 분당구 구미로 124 굿모닝프라자 1층","r":"경기·인천","m":"자루붓가께우동 정식","b":"자루우동을 좋아하는 와이프와 가려고 찾아낸 찐 맛집입니다.","t":"웨이팅이 있으나 회전률도 빠릅니다. 메인 시간대 전/후로 피해가시면 편하게 드실 수 있어요.","c":["가족 맛집","손님 코스"],"x":"흔한 체인 음식점에서 벗어나 전통적인 일본 감성 자루우동을 경험하고 싶을 때","p":"이민석"},{"id":80,"n":"대흥식당","a":"경기 오산시 오산로278번길 9-12 중부상회","r":"경기·인천","m":"돼지국밥, 수육","b":"본가 (부모님댁)","t":"점심시간은 피하세요. 국밥의 밥은 미리 말아져 나오는 토렴식. 돼지머리고기의 비계와 특유의 식감에 호불호","c":["혼밥 명당","가족 맛집","해장 종결지"],"x":"노포와 전통시장 분위기를 즐기고 싶을 때","p":"이지환"},{"id":81,"n":"부농정육식당","a":"서울시 송파구 백제고분로 28길 29","r":"서울","m":"눈꽃차돌","b":"집근처 정육 식당","t":"웨이팅 많음. 주차 불가.","c":[],"x":"신선한 소고기와 경험하지 못한 차돌박이가 생각나는날","p":"지상욱"},{"id":82,"n":"용당횟집","a":"부산 기장군 일광읍 칠암1길 8","r":"영남","m":"아나고 회, 장어구이","b":"샤힌 현장 근무 중 근방에 휴양지 느낌으로 찾았습니다","t":"자유롭습니다. 포장이나 전국 배송도 가능하다고 하시네요","c":["손님 코스"],"x":"","p":"차윤환"},{"id":83,"n":"삼일식당","a":"제주특별자치도 제주시 한림읍 동명리 1614-8","r":"제주","m":"내장탕(간이 강하지 않은 편아서 밋밋하다라고 생각할 수 있지만, 다진마늘을 넣어 깊이를 더하고, 반찬으로 내어주는 갈치속젓으로 간을 맞추면, 냉탕과 온탕을 오가는 느낌처럼 큰 자극을 느낄 수 있음)","b":"제주한림 해상풍력 소송의 감정 착수회의를 위하여 한림읍에 방문했다가, 내장탕 잘하는 식당이 있다고 하여 방문했습니다. (저는 여행이나 출장갈 때 그 지역 순대국/내장탕/돼지국밥집은 꼭 들리는 편입니다.)","t":"오전 6시에 열어서 오후 3시면 닫는 곳이라, 일찍 가야 합니다.","c":["해장 종결지"],"x":"","p":"이준호"},{"id":84,"n":"문덕 조야식당","a":"경북 포항시 남구 오천읍 문덕로11번길 4","r":"영남","m":"제육볶음이 킥입니다... 제육볶음을 시키면 된장찌개가 같이 나오고 밥도 셀프로 무한정 먹을 수 있습니다.","b":"본거주지가 포항인데 동네 맛집으로 소문나있습니다!! 포항 자체 방송에서 출연한 적도 있고 포스코, 현대제철 등 포항시 남구 직원들이 많이 애용하는 식당입니다.","t":"오후 7시까지 영업시간이라 적혀있지만 대개 오후 6시면 정리 하셔서 점심만 먹을 수 있다 생각하시면 될거같아요","c":["혼밥 명당","파워 점심"],"x":"","p":"강성희"},{"id":85,"n":"선창횟집","a":"강원도 동해시 일출로 233","r":"강원","m":"자연산 회","b":"제 고향 동해시에 위치해있고, 사장님이 선장님이셔서 자연산 회를 드실 수 있습니다","t":"주차장은 널널하고, 여름철만 피하면 웨이팅 없이 이용 가능합니다. 넓은 창에 바닷가가 바로 앞에 있어 2층 자리를 추천드려요","c":["손님 코스"],"x":"","p":"이준형"},{"id":86,"n":"아바이회국","a":"강원 속초시 청호로 115-12","r":"강원","m":"회덮밥, 회국수","b":"속초 여행시 방문하는 밥집","t":"주말에 사람이 많으므로, 아침일찍 방문하여 대기명단에 원하는 시간 작성 후 주변 관광 후 재방문, 주변에 주차 공간 많아요.","c":["가족 맛집"],"x":"","p":"전대중"},{"id":87,"n":"조선갈비","a":"경기 안산시 단원구 선부광장로 77 늘봄스위트빌2 2층","r":"경기·인천","m":"양념돼지갈비","b":"현지인 추천으로 가봤음","t":"목금토 저녁은 웨이팅있음. 사전예약 추천","c":["가족 맛집"],"x":"","p":"이규호"},{"id":88,"n":"고기국밥","a":"경기 이천시 마장면 덕평로 698 1층","r":"경기·인천","m":"빨간해장국","b":"관련 현장 : 힐스테이트 이천역","t":"혼밥 손님은 12시 30분 이후부터 가능. 점심때만 영업.","c":["파워 점심","해장 종결지"],"x":"","p":"이승윤"},{"id":89,"n":"기장손칼국수","a":"부산 부산진구 서면로 56","r":"영남","m":"칼국수","b":"지인을 통해서 알게 되었습니다.","t":"칼국수 주문 시, 김밥주문을 함께하시는 걸 추천드려요.","c":[],"x":"손으로 칼국수 면을 직접 뽑으시고 쑥갓이 포함되어 있어서 국물이 아주 시원함","p":"정기성"},{"id":90,"n":"천수식당","a":"전남광주 구례군 섬진강로 15-16","r":"호남","m":"섬진강을 바라보며 맛있는 참게탕과 겨울철 별미인 눈치회무침이 맛있어요. 겨울철에는 눈치회무침을 먼저 맛보고 참게탕을 먹는게 정석이예요.","b":"어린시절 부모님 손잡고 다니던 식당인데, 아직도 다니는 식당이예요.","t":"KTX로 구례구역을 이용하면 편기하고, 여건이 되면, 구례구역에서 렌트 후 근처 사성암, 화엄사, 섬진강변 열차바이크 방문하면 좋습니다.","c":["가족 맛집"],"x":"","p":"배완섭"},{"id":91,"n":"잉글랜드 경양식 돈까스","a":"인천 제물포구 우현로 90번길 7 혜성빌딩 2층","r":"경기·인천","m":"옛날 경양식 돈가스","b":"경양식돈까스 검색하다 우연히 발견","t":"영업시간 : 11시 30분 / 주말엔 1시간정도 웨이팅이 있습니다. / 주차는 도보 2분거리 공영주차장이 있습니다.","c":[],"x":"옛날 경양식 돈까스가 생각나시는 분께 추천드립니다.","p":"김성찬"},{"id":92,"n":"삼척곰치국","a":"인천 영종구 백운로186번길 71","r":"경기·인천","m":"대구탕 추천 (맑은 탕으로 전날의 해장과 피로가 싹 풀리는 맛)","b":"전에 근무했던 현장 주변 식당입니다(영종도준설토투기장현장)","t":"외진 곳에 있지만 예약필수~~~","c":["해장 종결지"],"x":"","p":"오영애"},{"id":93,"n":"삼보식당","a":"제주 서귀포시 중정로 25","r":"제주","m":"갈치조림과 고등어구이를 시켜 드셔보세요, 손바닥만한 갈치에 칼칼하고 달달한 양념이 너무 맛있는 조림과 베지근한 고등어구이가 할머니손맛을 생각나게 합니다","b":"고향 맛집!","t":"웨이팅은 없고, 주차는 옆에 공영주차장이나 길가에 하시면 될거에요","c":["가족 맛집","손님 코스"],"x":"","p":"권희연"},{"id":94,"n":"베트남쌀국수","a":"경상북도 울진군 죽변면 죽변중앙로 169-1","r":"영남","m":"모든메뉴가 맛있음 사장님이 베트남분이 직접 요리함","b":"2018년도 현장부임으로 알게되어 타지역에 사는 친구들에게도 추천하고 있음_신한울원자력3,4호기 현장","t":"점심/저녁 가능, 주차장은 맞으편 시장주차장 이용 [무료, 장날 3일/8일 주차불가]","c":["파워 점심","해장 종결지"],"x":"","p":"차영란"},{"id":95,"n":"돼지식당","a":"경상북도 울진군 죽변면 죽변중앙로 202-3","r":"영남","m":"생대구탕 (지리탕 최고) 메인은 메인이다! 생대구탕 시키면 실패는 안합니다.","b":"신한울 3,4호기 사원 아파트 근처 생대구탕 맛집","t":"차림비 내고 바로 앞 수협에서 회떠서 같이 먹기 가능! 대게도 사오면 같이 먹을 수 있어요. (울진대게는 겨울이 시즌!) 대게 구매도 모르겠다고하면 사장님께 소개를 부탁해 보는 것도 좋은 방법입니다. 완전 로컬 맛집","c":["해장 종결지","손님 코스"],"x":"","p":"윤현정"},{"id":96,"n":"태화루","a":"태화루","r":"영남","m":"일단은 꼬막짬뽕으로 유명합니다. 다들 짬뽕 먹으러 가는데, 저는 옛날식 달달한 짜장면 맛이 좋아서, 이 집에 가면 짜장면을 주로 먹습니다.","b":"아버지 고향에 꼬막짬뽕으로 유명한 집인데, 벌초 때마다 들르는게 루틴이 된 중국집입니다.","t":"웨이팅이 있으나, 금방 빠지는 편입니다.","c":["가족 맛집"],"x":"","p":"최도현","q":"울산 태화루"},{"id":97,"n":"한라산횟집","a":"서울 강서구 양천로 401 강서한강자이타워A동 1층","r":"서울","m":"고등어회. 메뉴판에 없지만 단초밥을 주문하면 한접시 내어주시니 주문 필수.","b":"마곡 더그리드","t":"예약추천. 7시에 고등어가 다 팔리는 경우도 있으니 늦어도 6시엔 방문하는걸 추천","c":["회식 추천"],"x":"","p":"김가은"},{"id":98,"n":"본꼴","a":"경북 울진군 울진읍 월변2길 28 본꼴","r":"영남","m":"양갈비, 소갈비, 대창, 특양 등 다양한 메뉴가 있지만 숯불향을 입혀 초벌한 생삽겹살이 1티어 입니다. 그 어디에서도 이 정도의 숯불향을 입힌 고기를 먹을 수 없었습니다.","b":"신한울 3,4호기 주설비공사 현장 설계사 직원의 추천","t":"미리 전화 예약하지 않으면 워크인으로는 방문이 어려우니 전화 예약 필수! 주차는 바로 옆에 큰 공영주차장이 있습니다.","c":["손님 코스"],"x":"","p":"박한빈"},{"id":99,"n":"엄가네본가시골집 본점","a":"충남 천안시 서북구 성정동 142-15","r":"충청·대전","m":"뼈 해장국, 매운맛은 매우 매움 주의","b":"고향 맛집!","t":"점심시간 웨이팅이 있음. 분점X 오로지 본점O, 주차 약 40대 정도 가능함.","c":["혼밥 명당","파워 점심","해장 종결지"],"x":"","p":"박진환"},{"id":100,"n":"청하 시장식육식","a":"대한민국 경상북도 포항시 북구 청하면 미남리 383-2","r":"영남","m":"돼지찌게","b":"고향 맛집!","t":"돼지찌게, 소찌게는 고기 부터 쌈과 함께 먹고, 국물이 쪼르면 밥과 비벼 먹으면 됩니다.","c":["파워 점심","해장 종결지"],"x":"","p":"김민준"},{"id":101,"n":"성수동 소문난감자탕","a":"서울시 성동구 성수동2가 315-100","r":"서울","m":"뼈다귀 감자탕","b":"뼈다귀해장국을 좋아해서 전국 맛집은 다 검색하고 찾아 다녔으나 여기가 제일 맛있습니다. 일부로 찾아가는 식당입니다.","t":"성수동 특성상 항상 대기줄이 많은 곳이지만, 1인 방문이라면 줄 서지 말고 바로 입장 가능합니다.","c":["혼밥 명당","파워 점심","해장 종결지"],"x":"","p":"김용일"},{"id":102,"n":"조훈모과자점","a":"전남광주 순천시 봉화로 46 조훈모과자점","r":"호남","m":"대표메뉴 배빵, 추천메뉴 크림팥빵","b":"지방근무시 단골집","t":"빵 종류별로 빵 나오는 시간이 다르니 미리 알아보고 방문하세요.","c":[],"x":"빵지순","p":"김정선"},{"id":103,"n":"밤섬횟집","a":"경남 창원시 진해구 속천로 150-1 밤섬횟집","r":"영남","m":"인원에 따라 모둠회를 시키면 주인 아저씨가 당일 잡은 자연산 회를 섞어 주셔요.","b":"출장 중 현지인 추천으로 알게 되었어요.","t":"예약은 필수, 식사 후 바로 옆 바다가 보이는 커피숍은 덤, 주차는 여유로와요. 봄에 진해군항제 보러 갈때 반드시 들릴 예정입니다.","c":["손님 코스"],"x":"","p":"한재연"},{"id":104,"n":"더도이 종가집 돼지국밥","a":"부산 북구 의성로 91","r":"영남","m":"한번가서 드신다면 꼭 백반보단 돼지국밥으로,","b":"부산에 있으면서 이곳 저곳 찾아다니다 지인 소개 받고 가서 단골이 된 식당, 부산 돼지국밥의 정수를 맛보고 싶다면 무조건 여기로.","t":"평일 점심에 조금 일찍가면 주차 자리가 한가합니다. [김해, 양산 등 분점들도 있으니 참고(맛은 90% 보장)]","c":["혼밥 명당","파워 점심","해장 종결지"],"x":"","p":"오정묵"},{"id":105,"n":"임가네민물장어","a":"인천 제물포구 샛골로 169","r":"경기·인천","m":"민물장어(양념, 소금)","b":"고향, 외가 친척 어른의 추천","t":"주차할 곳이 마땅히 없으므로 대중교통 이용, 옆에 있는 창석원조닭알탕에서 아구탕도 괜찮다.","c":["가족 맛집"],"x":"","p":"최신묵"},{"id":106,"n":"양사싯골","a":"대전 유성구 유성대로 1366번길 15-36","r":"충청·대전","m":"청국장 정식, 제육볶음 (청국장 정식에도 제육볶음이 나오긴 하지만 1인분 추가해서 드시길 권장)","b":"대전 북대전 톨게이트 근처로 대전에 연구단지 근처 방문했을 때 지역 맛집으로 소개받아서 알게 되었습니다.","t":"식당 앞에 주차가 되긴 하나 피크 시간 때는 단골 손님이 많은 편이긴 합니다만, 충청도 정통 청국장 맛집이랍니다. 추천드립니다.","c":["손님 코스"],"x":"","p":"임현묵"},{"id":107,"n":"비학산칼국수 해운대본점","a":"부산 해운대구 해운대해변로 329-4","r":"영남","m":"시원한 바지락 국물이 일품인 칼국수, 정갈한 반찬.","b":"어릴적부터 맛집이며, 현재 이주중인 부산 해운대구 우동3구역(디에이치 아센테르) 인근","t":"사람들 방문안하는시간 방문 권장,평소웨이팅있음. 칼국수는 15분 조리시간이 길어서 유의해야하나 기다릴 가치 있음.","c":["가족 맛집","파워 점심","손님 코스"],"x":"","p":"윤철원"},{"id":108,"n":"진성민속촌 부강 본점","a":"세종시 부강면 청연로 125","r":"충청·대전","m":"뼈해장국","b":"행복도시~오송역간 도로공사 참여중 인근 식당","t":"05시부터 ~ 14시까지 영업","c":["파워 점심","손님 코스"],"x":"뼈해장국의 남다른 찐한 맛","p":"송보성"},{"id":109,"n":"고릴라","a":"서울 서대문구 충정로 22-2","r":"서울","m":"모서리살과 김치찌개 주문필수, 노포감성 낭낭합니다.","b":"불가리아 코즐로두이 원전 7,8호기 설계공사 서울사무소","t":"퇴근시간만 되면, 사람들이 엄청 붐비기 때문에, 미리 예약하시거나, 선택적 근로시간제를 적극 활용하셔서 5시쯤 먼저 자리잡는 것을 추천드립니다. 식당입구가 좁은 골목에 있기에 헷갈릴수도 있지만, 좁은 골목으로 들어가는 것 맞습니다!","c":["회식 추천"],"x":"","p":"백범창"},{"id":110,"n":"대가웍","a":"대구광역시 달성군 현풍읍 부리 196-2 1층 대가웍","r":"영남","m":"야끼우동, 탕수육","b":"고향에서 발견한 야끼우동 맛집","t":"점심때 방문하면 웨이팅 필수 (앱으로 할 수 없고 무조건 현장대기), 주차장은 있으나 꽉찼다면 도로가 주차가능(차량통행이 많지않음)","c":["가족 맛집","해장 종결지","손님 코스"],"x":"중식땡길때 매콤 달달 야끼우동 땡길 때 가는 중식 맛집 (탕수육도 필수코스","p":"김진희"},{"id":111,"n":"미래수산식당","a":"충남 서산시 대산읍 삼길포1로 47","r":"충청·대전","m":"회덮밥, 물회 : 회가 그릇을 덮을 만큼 가득 담아줍니다.","b":"고향 맛집!","t":"주차는 근처에 할 수 있지만, 웨이팅이 길고 현장대기를 해야 합니다. 그만큼 인기가 많습니다. (온라인 예약 불가)","c":["가족 맛집","손님 코스"],"x":"","p":"조석희"},{"id":112,"n":"죽천회타운","a":"경북 포항시 북구 흥해읍 죽천길 91-2","r":"영남","m":"포항물회","b":"고향 맛집!","t":"웨이팅이 있을 수 있으니 조금 이른 식사시간 방문 추천드립니다.","c":[],"x":"알싸하게 스트레스 확 풀리는 음식이 땡길 때 '스트레스 타파'","p":"엄수영"},{"id":113,"n":"반도카츠 해운대본점","a":"부산 해운대구 좌동순환로 55 1층","r":"영남","m":"안심카츠,레몬소바","b":"지인소개","t":"예약하고 방문하면 기다림 없이 가능","c":["손님 코스"],"x":"","p":"박연선"},{"id":114,"n":"따봉시래기 대전봉명점","a":"대전 유성구 계룡로113번길 75","r":"충청·대전","m":"시레기 차돌쌈","b":"힐스테이트 도안리버파크 5단지 현장에 근무 中","t":"주차장은 가게앞에 별도로 있으며, 주말에는 사람이 많은걸로 알고있어 웨이팅 필요","c":["가족 맛집","손님 코스"],"x":"","p":"김민수"},{"id":115,"n":"풍촌코다리네","a":"대구광역시 북구 고성동3가 102-7","r":"영남","m":"코다리찜","b":"힐스테이트 대구역오페라 현장인근에 위치하여 현장진행시 자주 들리던곳","t":"11:00~21:00 인근 도로변 주차 가능","c":["손님 코스"],"x":"","p":"박선희"},{"id":116,"n":"초가뭉텅찌개","a":"강원 춘천시 신북읍 율문리 107-1","r":"강원","m":"김치찌개","b":"레고랜드 테마파크현장 근무할 때 자주가던 김치찌개 맛집입니다.","t":"메스컴을 타서 그런지 웨이팅 있습니다. 일찍출발하면 좋겠습니다","c":["가족 맛집","파워 점심","해장 종결지","손님 코스"],"x":"","p":"임현성"},{"id":117,"n":"나주곰탕 하얀집","a":"전남광주 나주시 금성관길 6-1","r":"호남","m":"곰탕 단일메뉴에 수육 한접시+콤콤한 찐 전라도김치!! (국물이 진국이니 김칫국물 금지!! 그대로 드세요!!)","b":"부모님 고향이 전라도라 지역 여행하면서 발견","t":"포장은 매우 빠르지만, 가서 먹는 맛보다는... 회전이 빨라서 기다릴만 합니다. 그리고 기다림을 다 잊게 하는 맛!!","c":["혼밥 명당","파워 점심","해장 종결지"],"x":"","p":"김은 책"},{"id":118,"n":"노을조개 거북섬","a":"경기 시흥시 거북섬1로 4 110호, 111호","r":"경기·인천","m":"무한리필 조개구기 및 조개찜","b":"회식","t":"주차장 무료","c":["손님 코스"],"x":"","p":"김유진"},{"id":119,"n":"고바우","a":"서울 서대문구 명물1길 22 1층","r":"서울","m":"소금구이와 기본으로 나오는 시락국","b":"대학교 재학시절 단골맛집","t":"","c":["회식 추천"],"x":"","p":"곽민주"},{"id":120,"n":"마치옛떡","a":"서울 성북구 동소문로26가길 11","r":"서울","m":"마늘치킨, B세트(떡볶이+튀김+순대), 마치옛떡(치킨+떡볶이).","b":"대학교 재학 중 치킨과 떡볶이를 동시에 파는 식당이 있어서 홀린듯 들어갔습니다. 근데 제가 외식을 진짜 안하는데, 여기는 이상하게 자꾸 손이 가더군요.","t":"전화주문 후 포장하면 할인이 쏠쏠합니다.","c":[],"x":"고정 데이트코스","p":"이동규"},{"id":121,"n":"여수돼지국","a":"전남광주 여수시 학동서3길 14-6","r":"호남","m":"돼지국밥/수육","b":"죽림더프라우드 현장 근무시 소장님께서 맛집이라고 데려가 주셨는데 진짜 소름끼칠 정도로 인생 국밥집이었습니다","t":"예약은 안되니 12시 전까지 가면 웨이팅 없이 먹을 수 있습니다","c":["회식 추천","파워 점심","해장 종결지","손님 코스"],"x":"","p":"이연수"},{"id":122,"n":"호반","a":"서울 종로구 삼일대로 26길 20","r":"서울","m":"병어찜, 모듬수육 죽습니다...","b":"회식으로 두 세번 간적이 있습니다.","t":"미리 예약하고 방문하는걸 추천드립니다. 하지만 그냥 들러서 물어보면 사장님께서 친절하게 되는지 안되는지 알려주시니 한번 도전해보시길","c":["회식 추천"],"x":"","p":"허재석"},{"id":123,"n":"우리장터","a":"강원도 원주시 중앙시장길 20-33","r":"강원","m":"모듬구이, 된장찌개","b":"강원도 여행길에 점심식사를 위해 들러서 가게된 곳으로 원주나 근처 여행길에 방문하면 좋을 곳입니다","t":"원주 중앙시장 공영주차장 주차 필수, 시장내에서도 길을 잃지 않도록 유의해야합니다","c":["가족 맛집"],"x":"","p":"김태우"},{"id":124,"n":"산아래 본점","a":"충북 제천시 봉양읍 앞산로 174","r":"충청·대전","m":"가격이 조금 있는 편이라 저희는 불맛 가득 두루치기 친환경 쌈 정식 및 오징어 더덕 정식을 먹었는데 정말 맛있다며 엄지척 하며 먹었던 기억이 나네요.","b":"가족들과 서울에서 갈만한 온천을 찾고 있었는데....수안보 온천을 갔다 인터넷 검색해서 가게되었는데 우연히 가는날이 kbs 생생정보통 촬영날이라 저희 첫째, 둘째아들 인터뷰를 했는데 둘째아들 인터뷰만 티비에 나오게 되었습니다. 그래서 아주 기억에 남는 식당으로 인연이 있습니다.","t":"웨이팅은 생각하고 가셔야 할듯 하며, 주차장은 넓은데... 대중교통으로는 힘들듯 합니다. 근처 가시면 한번 들러서 먹을만한 곳인거 같습니다.","c":["가족 맛집","손님 코스"],"x":"","p":"최미희"},{"id":125,"n":"감초식당","a":"서울 동대문구 약령서길 28","r":"서울","m":"대표메뉴는 돼지불갈비 이지만 고등어,삼치 구이 또한 맛있습니다.","b":"힐스테이트 청량리 메트로블 현장 주변 식당","t":"오후 3시~4시 브레이크타임 / 주차는 불가합니다.","c":["회식 추천","파워 점심","손님 코스"],"x":"","p":"김영돈"},{"id":126,"n":"합천일류돼지국밥","a":"부산 사상구 광장로 34 윌로펌프","r":"영남","m":"고기 국밥을 시킨 후 우동사리 추가해서 같이먹는게 킥입니다","b":"고향 맛집!","t":"주차가 불편한 게 단점입니다. 근처 공영주차장 주차하시고, 또간집 이후로 웨이팅이 있더라구요 24시간 운영되니 이른 아침 혹은 새벽에 여유롭게 가시는 걸 추천드립니다.","c":["혼밥 명당","해장 종결지","손님 코스"],"x":"","p":"유한아"},{"id":127,"n":"을밀대 평양냉면","a":"서울 마포구 숭문길 24","r":"서울","m":"평양냉면(양많이),녹두전","b":"지인소개","t":"웨이팅이있습니다 일찍 방문하면 좋습니다.","c":["가족 맛집","파워 점심"],"x":"","p":"고성현"},{"id":128,"n":"항만식당","a":"경기 김포시 월곶면 김포대로 2954 항만식당","r":"경기·인천","m":"동태내장 모듬 전골!!!(저는 알고니를 좋아해서 무조건 알과 고니를 추가해서 먹어요, 끓었다고 바로 드시지 마시고 함께간 분들과 담소를 나누면서 딱 5분 만 더 끓여주면.. 크~ 맛있어지는 소리와 냄새, 끓을수록 더 깊은맛이 납니다)","b":"30년 전 부모님 등산모임을 통해 따라다니게 된 것이 성인이 된 지금도 동태탕 하면 생각나는 맛집이 되었습니다.","t":"저녁에는 아주 가끔.. 재료소진으로 못먹을때도 있어요.. 시간이 늦었다면 꼭 미리 전화해보세요!","c":["회식 추천","가족 맛집","해장 종결지","손님 코스"],"x":"김포를 가게되면 일부러 돌아가는 길이라도 들러서 포장이라도 해야하는 맛집입니다.","p":"김영주"},{"id":129,"n":"박만석 돼지곰탕 본관","a":"경남 양산시 물금읍 목화4길 1 1층 박만석돼지곰탕","r":"영남","m":"돼지곰탕","b":"고향 맛집!","t":"11:10분,웨이팅, 길가 주차 가능","c":[],"x":"점심 든든하게 국밥","p":"김호준"},{"id":130,"n":"기절초풍왕순대","a":"서울특별시 관악구 봉천로62길 2","r":"서울","m":"순대정식, 참이슬 짜배기","b":"자취생 주식","t":"","c":["혼밥 명당","파워 점심","해장 종결지"],"x":"","p":"고지혜"},{"id":131,"n":"예원","a":"경북 울진군 죽변면 죽변리 10-101","r":"영남","m":"죽변짬뽕","b":"신한울 3,4호기 주설비공사 현장 부임 중 방문한 기억이 있습니다.","t":"주차공간이 두 군데 있어서 자리가 넉넉합니다. 단, 점심시간은 웨이팅이 있을 수 있습니다.","c":["회식 추천","가족 맛집","파워 점심","손님 코스"],"x":"","p":"이호준"},{"id":132,"n":"이치젠","a":"서울 마포구 포은로 109","r":"서울","m":"텐동","b":"지인 소개","t":"식당이 작고 웨이팅이 길 수 있음!","c":["혼밥 명당"],"x":"","p":"위나라"},{"id":133,"n":"고시해정","a":"경기 용인시 기흥구 흥덕1로 5-14 1,2층","r":"경기·인천","m":"고시순대국, 반찬으로 나오는 고사리절임을 순대에 올려먹으면 꿀맛/순대국 불호인 친언니랑 갔었는데 국물까지 다 먹더군요","b":"수원하이테크센터 공사때 점심회식으로 방문","t":"주차공간이 협소하여 점심시간때에는 길가에 주차해야할 수 도있습니다.","c":["가족 맛집","파워 점심","해장 종결지","손님 코스"],"x":"","p":"심주경"},{"id":134,"n":"매화골 뚝딱 김치찌개","a":"경기 용인시 기흥구 마북로 159 한성프라자","r":"경기·인천","m":"김치랑 구워먹는 삼겹살, 그걸 다먹고 먹는 볶음밥이 예술입니다.","b":"용인 배구단 체육관 앞 시내 사거리에 있는 삼겹살 집인데 모든 선수들 코칭스탭분들이 최고 맛집이라고 해서 가봤는데 제가 먹어본 삼겹살 중에 최고였습니다.","t":"","c":["회식 추천"],"x":"","p":"정오현"},{"id":135,"n":"운길산 다보록","a":"경기 남양주시 조안면 북한강로301번길 18","r":"경기·인천","m":"해물수제비, 미나리전","b":"수종사 방문 후 식사","t":"등산객이나 라이딩 후 방문객이 많으니 식사 시간에 웨이팅이 있을 수 있다. 두물머리나 양수리, 수종사 등 나들이 후 방문하기 좋다.","c":["가족 맛집"],"x":"","p":"현정희"},{"id":136,"n":"진미오겹살","a":"대전 유성구 지족동 906-2","r":"충청·대전","m":"오겹살","b":"회식","t":"주차는 가게 주변 도로 주차 가능","c":["가족 맛집","손님 코스"],"x":"","p":"박성진"},{"id":137,"n":"오감","a":"전북 군산시 미제길 29","r":"호남","m":"뼈 없는 갈비탕","b":"동생의 추천","t":"네이버에는 토,일 휴무라고 되어 있습니다.","c":["혼밥 명당","파워 점심","해장 종결지"],"x":"","p":"이윤정"},{"id":138,"n":"을밀","a":"서울 마포구 숭문길 24 1층","r":"서울","m":"물냉면(거냉(얼음x) 양많이로 주문하면 좋습니다.)","b":"지인 소개","t":"여름 점심에는 웨이팅이 길어, 식사시간을 넉넉하게 할애해야 합니다.","c":["손님 코스"],"x":"","p":"나경록"},{"id":139,"n":"광릉불고기 월곶","a":"경기도 시흥시 월곶동 488-4","r":"경기·인천","m":"광릉숯불고기 백반","b":"월곶에코피아 놀러갔다가","t":"연탄 불고기라서 시간이 오래 걸려 3인가면 4인분 시키면 좋습니다. 2인이면 3인분","c":[],"x":"맛있는 연탄 불고기 먹고 싶을때","p":"이영욱"},{"id":140,"n":"부강옥 세종부강본점","a":"세종특별자치시 부강면 부강외천로 103 1층 부강옥","r":"충청·대전","m":"순대국(특)","b":"세종특별자치시 금빛노을교 현장 근처 방문","t":"점심시간 11시30분이전에 가야 웨이팅이 없습니다. 주차는 맡은편 건너에도 가능하고 항상 피크시간때 이전에 방문하는게 좋습니다.","c":["혼밥 명당","파워 점심","해장 종결지"],"x":"","p":"정경석"},{"id":141,"n":"능곡할머니 북어탕","a":"경기 고양시 덕양구 토당로 66-15 1층","r":"경기·인천","m":"북어탕 국물이 최고입니다. 두부를 꼭 추가해서 드시다가 마지막에 라면사리를 추가해 주세요!","b":"대곡~소사 복선전철 민간투자시설사업 1,2공구","t":"구도심 마을에 있는 식당이라 주차여건이 좋지 않습니다. 식당을 조금만 지나면 공터가 있으니 조금 걸으시더라도 공터쪽에 주치후 이동하시면 좋습니다!","c":["해장 종결지"],"x":"","p":"윤진혁"},{"id":142,"n":"한서방칼국수","a":"강원 태백시 강원남부로 468","r":"강원","m":"닭칼국수에 보리밥 한공기 추가","b":"대학교 다녔을 때 근처 유명한 칼국수 집이 있다하여 알게됨","t":"강원도 태백이다 보니 많이 멀지만 주변 갈 일 있으면 꼭 가보세요! 진짜 닭칼국수의 끝판왕 입니다.","c":[],"x":"정말 진한 닭칼국수에 보리밥 한공기 쓱 말아 먹으면 몸이 보양되는 '한방요리'","p":"강석민"},{"id":143,"n":"산청돼지국밥, 대면당 , 불난버섯집","a":"산청돼지국밥 : 경남 진주시 창렬로 71 , 대면당 : 경남 진주시 진주대로1163번길 9 1층, 불난버섯집 : 경기 평택시 고덕면 고덕북로 63","r":"경기·인천","m":"돼지국밥, 3곱 국수, 버섯매운탕에 제육무침 필수!","b":"산청돼지국밥, 대면당 : 고향 / 불난버섯집 : 현장근무 시 알게","t":"웨이팅은 회전율이 높아 길지 않은 편","c":["파워 점심","해장 종결지","손님 코스"],"x":"","p":"이정훈"},{"id":144,"n":"무등골","a":"전남광주 북구 운용로 65","r":"호남","m":"메기탕, 빠가탕, 갈치조림, 병어조림","b":"고향에 있는 대학교 교수님, 대학원생 맛집","t":"최소 1시간 전 미리 연락을 주어야 합니다(점심 장사는 예약만 받을때가 있습니다.)","c":["회식 추천","파워 점심","손님 코스"],"x":"미리 예약시 어떤 음식도 다 되는 실비집 느낌 가게 / 생선조림, 민물고기 탕이 주 메뉴이며 솥밥으로 든든한 한끼식사","p":"이수훈"},{"id":145,"n":"강릉 명성옥","a":"강릉시 노암등길 92 (경포중학교 앞)","r":"강원","m":"설렁탕(소면 별도 제공), 우족탕(소면 제공X)","b":"강릉 부임후 지인의 소개로 방문","t":"매일 11시 OPEN, 재료 소진시까지만 영업(오후 3~4시경) 이후 다음날 재료 준비로 CLOSED.","c":[],"x":"매서운 추위로 꽁꽁 언 몸과 마음을 녹이고 싶을때, 환절기 건강을 유지하기 위해 찾아가고 싶은 집","p":"김성택"},{"id":146,"n":"주천묵집","a":"강원 영월군 주천면 송학주천로 1282-11","r":"강원","m":"산초 두부 구이","b":"영월 단종 테마 여행 가다가 원주민의 추천","t":"","c":["가족 맛집"],"x":"","p":"송승우"},{"id":147,"n":"부암갈비","a":"인천 남동구 용천로 149","r":"경기·인천","m":"돼지생갈비, 갈치속젓볶음밥","b":"인천건설기술교육원 교육 당시 인근 맛집으로 추천받음","t":"웨이팅이 어마무시해졌음. 식사시간을 피해서 방문해야 그나마 웨이팅이 순조로워짐","c":["회식 추천","손님 코스"],"x":"","p":"유정일"},{"id":148,"n":"박선희황태어글탕 월평직영점","a":"대전 서구 한밭대로707번길 30","r":"충청·대전","m":"황태어글탕","b":"유관기관, 현지업체 추천","t":"11시30분, 우리회사 점심시간대","c":["파워 점심"],"x":"","p":"오범균"},{"id":149,"n":"뜯고기 신용산본점","a":"서울 용산구 한강대로7길 30-16 1층 (한강로3가)","r":"서울","m":"쪽갈비 간장맛이 추천 메뉴이고 사이드로 물쫄면은 필수입니다.","b":"인스타 맛집 추천을 통해 알게되었습니다.","t":"웨이팅이 꽤 있는 편이라 방문 전 캐치테이블 예약을 추천합니다.","c":["회식 추천","가족 맛집"],"x":"","p":"정유리"},{"id":150,"n":"또순이네집","a":"서울시 영등포구 양평동 4가 81","r":"서울","m":"여기 된장찌개가 진짜 맛있어요","b":"저희 아빠가 제일 좋아하던 식당이셨어요 콜레스트롤 높으셔서 소고기 술 잘 못드셧는데 여기 한달에 한번 약간 치팅데이같이 가시던곳!","t":"언제 가도 북적이지만 진짜 맛있어요 웨이팅은 자리가 넓어서 거의 없고 주차는 못해요 된찌 포장이 되서 좋아요 ㅎㅎ가보세요다들","c":["회식 추천","가족 맛집","해장 종결지"],"x":"","p":"조윤서"}];
+const REGIONS = ["서울","경기·인천","충청·대전","강원","영남","호남","제주"];
+const CATS = ["가족 맛집","회식 추천","손님 코스","혼밥 명당","파워 점심","해장 종결지"];
+const CACHE_KEY = "hdec-food-geo-v1";
 
-    // ============================================================
-    // 3) 데이터 오류 보정 (지역/좌표가 잘못 들어간 항목)
-    //    geocode: true → 주소로 카카오 좌표 재검색해서 덮어씀
-    // ============================================================
-    const FIXES = {
-      20:  { geocode: true },                                              // 양반수제비 (대전 서구인데 좌표가 인천)
-      25:  { region: "영남", sigungu: "대구 중구", geocode: true },          // 군위식당
-      41:  { region: "충청·대전", sigungu: "대전 중구", geocode: true },      // 한영식당
-      50:  { region: "영남", sigungu: "대구 중구", geocode: true },          // 중화반점
-      58:  { geocode: true, address2: "충남 서산시 대산읍 대산리 973" },      // 한우마을 (주소 오타 + 좌표 오류)
-      70:  { region: "충청·대전", sigungu: "대전 중구", geocode: true },      // 한영식당
-      115: { region: "영남", sigungu: "대구 북구" },                         // 풍촌코다리네 (지역만 오류)
-      148: { geocode: true }                                               // 박선희황태어글탕 (대전 서구인데 좌표가 인천)
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const state = { region:null, cat:null, open:null };
+let map = null, geo = {}, byId = {};
+DATA.forEach(d => byId[d.id] = d);
+try { geo = JSON.parse(localStorage.getItem(CACHE_KEY) || "{}"); } catch(e){ geo = {}; }
+
+/* ---------- filters ---------- */
+function visibleItems(){
+  return DATA.filter(d => (!state.region || d.r === state.region) && (!state.cat || d.c.includes(state.cat)));
+}
+function renderFilters(){
+  const regionBase = DATA.filter(d => !state.cat || d.c.includes(state.cat));
+  const catBase = DATA.filter(d => !state.region || d.r === state.region);
+  $("regions").innerHTML =
+    `<button class="chip" type="button" data-r="" aria-pressed="${!state.region}">전체<b>${regionBase.length}</b></button>` +
+    REGIONS.map(r => `<button class="chip" type="button" data-r="${r}" aria-pressed="${state.region===r}">${r}<b>${regionBase.filter(d=>d.r===r).length}</b></button>`).join("");
+  $("cats").innerHTML = CATS.map(c =>
+    `<button class="cat" type="button" data-c="${c}" aria-pressed="${state.cat===c}"><span>${c}</span><em>${catBase.filter(d=>d.c.includes(c)).length}곳</em></button>`).join("");
+}
+function shortLoc(a){ return a.split(/\s+/).slice(0,2).join(" "); }
+
+function cardHTML(d){
+  const open = state.open === d.id;
+  const q = encodeURIComponent(d.n);
+  const g = geo[d.id];
+  const kakao = g ? `https://map.kakao.com/link/to/${q},${g.lat},${g.lng}` : `https://map.kakao.com/?q=${encodeURIComponent(d.a)}`;
+  const naver = `https://map.naver.com/p/search/${encodeURIComponent(d.a + " " + d.n)}`;
+  const row = (k,v) => v ? `<dt>${k}</dt><dd>${esc(v)}</dd>` : "";
+  return `<article class="card${open?" open":""}" data-id="${d.id}">
+    <button class="head" type="button" aria-expanded="${open}" aria-controls="m${d.id}">
+      <div class="row1"><span class="nm">${esc(d.n)}</span><span class="loc">${esc(shortLoc(d.a))}</span></div>
+      <p class="sig">${esc(d.m)}</p>
+      ${d.c.length ? `<div class="tags">${d.c.map(c=>`<span class="tag">${c}</span>`).join("")}</div>` : ""}
+    </button>
+    <div class="more" id="m${d.id}"><div><div class="detail"><dl>
+      ${row("식당과의 인연", d.b)}
+      ${row("방문 팁", d.t)}
+      ${row("이럴 때 추천", d.x)}
+      ${row("주소", d.a)}
+    </dl>
+    <div class="acts"><a class="pri" href="${kakao}" target="_blank" rel="noopener">카카오맵 길찾기</a><a href="${naver}" target="_blank" rel="noopener">네이버지도</a></div>
+    <p class="by">추천인: ${esc(d.p)}</p></div></div></div>
+  </article>`;
+}
+function renderList(){
+  const items = visibleItems();
+  $("count").textContent = `맛집 ${items.length}곳`;
+  $("reset").hidden = !(state.region || state.cat);
+  $("list").innerHTML = items.length ? items.map(cardHTML).join("") :
+    `<div class="empty">조건에 맞는 맛집이 없어요.<br>지역이나 추천 순간을 바꿔 보세요.<br><button type="button" id="empty-reset">필터 해제</button></div>`;
+}
+
+/* ---------- map ---------- */
+const overlays = {};
+function makePin(d){
+  const g = geo[d.id];
+  if (!g || overlays[d.id]) return;
+  const el = document.createElement("div");
+  el.className = "pin" + (state.open === d.id ? " sel" : "");
+  el.innerHTML = `<span>${esc(d.n)}</span><i></i>`;
+  el.addEventListener("click", () => select(d.id, {fromMap:true}));
+  overlays[d.id] = { el, ov: new kakao.maps.CustomOverlay({ position:new kakao.maps.LatLng(g.lat,g.lng), content:el, yAnchor:1, zIndex:1 }) };
+}
+function syncMap(fit){
+  if (!map) return;
+  const vis = new Set(visibleItems().map(d => d.id));
+  const bounds = new kakao.maps.LatLngBounds();
+  let n = 0;
+  DATA.forEach(d => {
+    makePin(d);
+    const o = overlays[d.id];
+    if (!o) return;
+    const show = vis.has(d.id);
+    o.ov.setMap(show ? map : null);
+    if (show){ bounds.extend(new kakao.maps.LatLng(geo[d.id].lat, geo[d.id].lng)); n++; }
+  });
+  if (fit && n){
+    if (n === 1){ map.setLevel(4); map.setCenter(bounds.getSouthWest()); }
+    else map.setBounds(bounds, 70, 70, 70, 70);
+  }
+}
+function select(id, opt={}){
+  const was = state.open;
+  state.open = (was === id && !opt.fromMap) ? null : id;
+  renderList();
+  Object.entries(overlays).forEach(([k,o]) => { o.el.classList.toggle("sel", +k === state.open); o.ov.setZIndex(+k === state.open ? 10 : 1); });
+  if (state.open){
+    const card = document.querySelector(`.card[data-id="${id}"]`);
+    if (card) card.scrollIntoView({block:"nearest"});
+    const g = geo[id];
+    if (map && g){ if (map.getLevel() > 5) map.setLevel(4); map.panTo(new kakao.maps.LatLng(g.lat, g.lng)); }
+  }
+}
+
+/* ---------- geocoding (카카오 주소 → 좌표, 결과는 브라우저에 저장) ---------- */
+function cleanAddr(a){
+  a = a.replace(/\([^)]*\)/g, " ").replace(/\s+/g, " ").trim();
+  const t = a.split(" ");
+  for (let i=1;i<t.length;i++){
+    if (/^\d+(-\d+)?$/.test(t[i]) && /(로|길)\d*[가-힣]*$/.test(t[i-1])) return t.slice(0,i+1).join(" ");
+  }
+  return a;
+}
+function geocodeOne(d, gc, ps){
+  const tries = [d.q || d.a, cleanAddr(d.q || d.a)];
+  return new Promise(resolve => {
+    let i = 0;
+    const next = () => {
+      if (i < tries.length){
+        const q = tries[i++];
+        gc.addressSearch(q, (r, s) => (s === kakao.maps.services.Status.OK && r[0]) ? resolve({lat:+r[0].y, lng:+r[0].x}) : next());
+      } else {
+        ps.keywordSearch(`${shortLoc(d.q || d.a)} ${d.n}`, (r, s) => resolve((s === kakao.maps.services.Status.OK && r[0]) ? {lat:+r[0].y, lng:+r[0].x} : null));
+      }
     };
-    DATA.forEach(item => {
-      const f = FIXES[item.id];
-      if (!f) return;
-      if (f.region) item.region = f.region;
-      if (f.sigungu) item.sigungu = f.sigungu;
-    });
-
-    // ------------------------------------------------------------
-    let selectedRegion = "전체";
-    let searchName = "";
-    let searchLoc = "";
-    let selectedId = null;
-
-    let map = null;
-    let overlays = [];
-    let activePopupOverlay = null;
-
-    const regionCenters = {
-      "전체": { lat: 36.2, lng: 127.8, level: 12 },
-      "서울": { lat: 37.5665, lng: 126.9780, level: 8 },
-      "경기·인천": { lat: 37.4138, lng: 127.0500, level: 9 },
-      "충청·대전": { lat: 36.5184, lng: 127.1666, level: 10 },
-      "강원": { lat: 37.7500, lng: 128.5000, level: 10 },
-      "영남": { lat: 35.5384, lng: 128.8000, level: 11 },
-      "호남": { lat: 35.2000, lng: 127.0000, level: 11 },
-      "제주": { lat: 33.3800, lng: 126.5500, level: 9 }
-    };
-
-    function showMapError(msg) {
-      const el = document.getElementById("mapError");
-      el.innerHTML = msg;
-      el.style.display = "flex";
+    next();
+  });
+}
+async function geocodeAll(){
+  const gc = new kakao.maps.services.Geocoder(), ps = new kakao.maps.services.Places();
+  const todo = DATA.filter(d => !geo[d.id]);
+  const failed = [];
+  let done = 0;
+  for (const d of todo){
+    $("note").hidden = false; $("note").textContent = `맛집 위치를 불러오는 중… ${done}/${todo.length}`;
+    const g = await geocodeOne(d, gc, ps);
+    done++;
+    if (g){ geo[d.id] = g; } else failed.push(d.n);
+    if (done % 10 === 0 || done === todo.length){
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify(geo)); } catch(e){}
+      syncMap(false);
     }
+    await new Promise(r => setTimeout(r, 60));
+  }
+  syncMap(true);
+  if (failed.length){
+    $("note").className = "note err";
+    $("note").textContent = `위치를 찾지 못한 맛집 ${failed.length}곳: ${failed.slice(0,4).join(", ")}${failed.length>4?" 외":""}`;
+    console.warn("지오코딩 실패:", failed);
+  } else $("note").hidden = true;
+}
 
-    function startKakao() {
-      renderCardsOnly();
+function initMap(){
+  map = new kakao.maps.Map($("map"), { center:new kakao.maps.LatLng(36.4, 127.9), level:12 });
+  map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
+  kakao.maps.event.addListener(map, "zoom_changed", () => $("map").classList.toggle("far", map.getLevel() >= 10));
+  $("map").classList.toggle("far", map.getLevel() >= 10);
+  syncMap(true);
+  geocodeAll();
+}
+function loadKakao(){
+  if (!KAKAO_KEY || KAKAO_KEY.startsWith("여기에")){
+    $("note").hidden = false; $("note").className = "note err";
+    $("note").textContent = "지도를 보려면 코드 상단 KAKAO_KEY에 카카오 JavaScript 키를 넣어주세요.";
+    return;
+  }
+  const s = document.createElement("script");
+  s.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_KEY}&libraries=services&autoload=false`;
+  s.onload = () => kakao.maps.load(initMap);
+  s.onerror = () => { $("note").hidden = false; $("note").className = "note err"; $("note").textContent = "카카오 지도를 불러오지 못했어요. 키와 사이트 도메인 등록을 확인해 주세요."; };
+  document.head.appendChild(s);
+}
 
-      if (!KAKAO_JS_KEY || KAKAO_JS_KEY.includes("여기에")) {
-        console.error("KAKAO_JS_KEY가 설정되지 않았습니다.");
-        showMapError("카카오 JavaScript 키가 설정되지 않았습니다.<br>코드 상단의 KAKAO_JS_KEY를 확인하세요.");
-        return;
-      }
+/* ---------- events ---------- */
+function refresh(fit){
+  if (state.open && !visibleItems().some(d => d.id === state.open)) state.open = null;
+  renderFilters(); renderList(); syncMap(fit);
+}
+$("regions").addEventListener("click", e => {
+  const b = e.target.closest(".chip"); if (!b) return;
+  state.region = b.dataset.r || null; refresh(true);
+});
+$("cats").addEventListener("click", e => {
+  const b = e.target.closest(".cat"); if (!b) return;
+  state.cat = state.cat === b.dataset.c ? null : b.dataset.c; refresh(true);
+});
+$("reset").addEventListener("click", () => { state.region = state.cat = null; refresh(true); });
+$("list").addEventListener("click", e => {
+  if (e.target.id === "empty-reset"){ state.region = state.cat = null; refresh(true); return; }
+  const h = e.target.closest(".head"); if (h) select(+h.closest(".card").dataset.id);
+});
 
-      const script = document.createElement("script");
-      script.src = "https://dapi.kakao.com/v2/maps/sdk.js?appkey=" + encodeURIComponent(KAKAO_JS_KEY) + "&libraries=services&autoload=false";
-
-      script.onload = () => {
-        kakao.maps.load(() => {
-          map = new kakao.maps.Map(document.getElementById("map"), {
-            center: new kakao.maps.LatLng(36.2, 127.8),
-            level: 12
-          });
-          map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
-
-          renderAll();
-          fixCoordinates();
-        });
-      };
-
-      script.onerror = () => {
-        console.error("카카오 지도 SDK 스크립트 로드 실패");
-        showMapError("카카오 지도를 불러오지 못했습니다.<br>① 개발자 콘솔 > 플랫폼 > Web 에 https://hdec-cdl.github.io 등록<br>② JavaScript 키 확인<br>③ 광고 차단 프로그램 해제");
-      };
-
-      document.head.appendChild(script);
-    }
-
-    // 주소 → 좌표 재검색 (FIXES에서 geocode:true 인 항목)
-    function fixCoordinates() {
-      if (!kakao.maps.services) return;
-      const geocoder = new kakao.maps.services.Geocoder();
-      const targets = DATA.filter(d => FIXES[d.id] && FIXES[d.id].geocode);
-      let pending = targets.length;
-      if (!pending) return;
-
-      targets.forEach(item => {
-        const query = FIXES[item.id].address2 || item.address;
-        geocoder.addressSearch(query, (result, status) => {
-          if (status === kakao.maps.services.Status.OK && result[0]) {
-            item.lat = parseFloat(result[0].y);
-            item.lng = parseFloat(result[0].x);
-          } else {
-            console.warn("좌표 재검색 실패:", item.id, item.name, query);
-          }
-          if (--pending === 0) renderAll();
-        });
-      });
-    }
-
-    function getFilteredData() {
-      return DATA.filter(item => {
-        const matchRegion = selectedRegion === "전체" || item.region === selectedRegion;
-        const matchName = !searchName || item.name.toLowerCase().includes(searchName.toLowerCase());
-        const matchLoc = !searchLoc || (item.region + " " + item.sigungu + " " + item.address).toLowerCase().includes(searchLoc.toLowerCase());
-        return matchRegion && matchName && matchLoc;
-      });
-    }
-
-    function renderCardsOnly() {
-      const cardList = document.getElementById("cardList");
-      cardList.innerHTML = "";
-
-      const filtered = getFilteredData();
-      document.getElementById("resCount").innerText = filtered.length;
-
-      filtered.forEach(item => {
-        const card = document.createElement("div");
-        card.className = "card" + (item.id === selectedId ? " selected" : "");
-        card.id = `card-${item.id}`;
-        card.onclick = () => selectItem(item, true);
-        card.innerHTML = `
-          <div class="card-header">
-            <span class="card-title">${item.name}</span>
-            <span class="card-recommender">${item.recommender} 추천</span>
-          </div>
-          <div class="card-location">${item.region} · ${item.sigungu || item.address.split(' ')[0]}</div>
-          <div class="card-desc">${item.desc}</div>
-          <div class="card-footer">
-            <span class="menu-preview">⭐ ${item.menu}</span>
-            <span class="more-btn">상세보기 &rarr;</span>
-          </div>`;
-        cardList.appendChild(card);
-      });
-    }
-
-    function renderAll(recenter = true) {
-      renderCardsOnly();
-
-      overlays.forEach(o => o.setMap(null));
-      overlays = [];
-      if (activePopupOverlay) { activePopupOverlay.setMap(null); activePopupOverlay = null; }
-
-      if (!map || typeof kakao === "undefined" || !kakao.maps) return;
-
-      getFilteredData().forEach((item, idx) => {
-        const pinDiv = document.createElement("div");
-        pinDiv.className = "k-pin" + (item.id === selectedId ? " active" : "");
-        pinDiv.id = `pin-${item.id}`;
-        pinDiv.innerText = idx + 1;
-        pinDiv.onclick = () => { selectItem(item, false); showPopup(item); };
-
-        const ov = new kakao.maps.CustomOverlay({
-          position: new kakao.maps.LatLng(item.lat, item.lng),
-          content: pinDiv,
-          yAnchor: 0.5
-        });
-        ov.setMap(map);
-        overlays.push(ov);
-      });
-
-      if (recenter && regionCenters[selectedRegion]) {
-        const rc = regionCenters[selectedRegion];
-        map.setLevel(rc.level);
-        map.panTo(new kakao.maps.LatLng(rc.lat, rc.lng));
-      }
-    }
-
-    function showPopup(item) {
-      if (!map) return;
-      if (activePopupOverlay) activePopupOverlay.setMap(null);
-
-      const popupDiv = document.createElement("div");
-      popupDiv.className = "k-popup";
-      popupDiv.innerHTML = `
-        <div class="k-popup-title">${item.name}</div>
-        <div class="k-popup-sub">${item.region} · ${item.sigungu} (추천: ${item.recommender})</div>
-        <div class="k-popup-menu"><strong>메뉴:</strong> ${item.menu}</div>
-        <button class="k-popup-btn" onclick="openModalById(${item.id})">상세정보 & 길찾기</button>`;
-
-      activePopupOverlay = new kakao.maps.CustomOverlay({
-        position: new kakao.maps.LatLng(item.lat, item.lng),
-        content: popupDiv,
-        yAnchor: 1.2,
-        zIndex: 10
-      });
-      activePopupOverlay.setMap(map);
-    }
-
-    function selectItem(item, openPopup) {
-      selectedId = item.id;
-
-      document.querySelectorAll(".card").forEach(c => c.classList.remove("selected"));
-      const targetCard = document.getElementById(`card-${item.id}`);
-      if (targetCard) {
-        targetCard.classList.add("selected");
-        targetCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      }
-
-      document.querySelectorAll(".k-pin").forEach(p => p.classList.remove("active"));
-      const targetPin = document.getElementById(`pin-${item.id}`);
-      if (targetPin) targetPin.classList.add("active");
-
-      if (map) {
-        map.setLevel(4);
-        map.panTo(new kakao.maps.LatLng(item.lat, item.lng));
-        if (openPopup) showPopup(item);
-      }
-    }
-
-    function openModalById(id) {
-      const item = DATA.find(d => d.id === id);
-      if (item) openModal(item);
-    }
-
-    function openModal(item) {
-      document.getElementById("mName").innerText = item.name;
-      document.getElementById("mRegionLoc").innerText = `${item.region} · ${item.sigungu}`;
-      document.getElementById("mAuthor").innerText = item.recommender;
-      document.getElementById("mAddr").innerText = item.address;
-      document.getElementById("mMenu").innerText = item.menu;
-      document.getElementById("mTips").innerText = item.tips;
-      document.getElementById("mDesc").innerText = item.desc;
-
-      const q = encodeURIComponent(`${item.name} ${item.address}`);
-      document.getElementById("btnKakao").href = `https://map.kakao.com/link/search/${q}`;
-      document.getElementById("btnNaver").href = `https://map.naver.com/v5/search/${q}`;
-      document.getElementById("btnGoogle").href = `https://www.google.com/maps/search/?api=1&query=${q}`;
-
-      document.getElementById("modalBackdrop").classList.add("open");
-    }
-
-    function closeModal() {
-      document.getElementById("modalBackdrop").classList.remove("open");
-    }
-
-    document.getElementById("modalBackdrop").addEventListener("click", e => {
-      if (e.target === e.currentTarget) closeModal();
-    });
-
-    document.querySelectorAll(".tab-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        selectedRegion = btn.dataset.region;
-        selectedId = null;
-        renderAll();
-      });
-    });
-
-    // 검색 중에는 지도 위치/줌을 건드리지 않음
-    document.getElementById("inputName").addEventListener("input", e => {
-      searchName = e.target.value.trim();
-      renderAll(false);
-    });
-    document.getElementById("inputLoc").addEventListener("input", e => {
-      searchLoc = e.target.value.trim();
-      renderAll(false);
-    });
-
-    window.addEventListener("load", startKakao);
-  </script>
+renderFilters(); renderList(); loadKakao();
+</script>
 </body>
 </html>

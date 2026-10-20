@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>현건슐랭 - 전국 맛지도 (카카오맵)</title>
+  <title>현건슐랭 - 전국 맛지도</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     :root {
       --primary: #002b49;
       --primary-light: #004d80;
       --accent: #e02424;
-      --kakao-yellow: #fee500;
       --bg: #f8fafc;
       --sidebar-bg: #ffffff;
       --text-main: #191f28;
@@ -247,20 +247,20 @@
       font-weight: 700;
     }
 
-    /* Right Kakao Map */
+    /* Right Map Container */
     .map-container {
       flex: 1;
       height: 100%;
       position: relative;
-      background: #e5e5e5;
+      background: #e2e8f0;
     }
     #map {
       height: 100%;
       width: 100%;
     }
 
-    /* Kakao Custom Pin Marker */
-    .k-pin {
+    /* Custom Pin Marker */
+    .k-pin, .leaflet-div-pin {
       background: #002b49;
       color: #ffffff;
       border: 2px solid #ffffff;
@@ -276,15 +276,14 @@
       cursor: pointer;
       transition: transform 0.15s ease, background 0.15s ease;
     }
-    .k-pin:hover, .k-pin.active {
-      background: #e02424;
+    .k-pin:hover, .k-pin.active, .leaflet-div-pin.active {
+      background: #e02424 !important;
       transform: scale(1.25);
+      z-index: 9999;
     }
 
-    /* Kakao Custom Popup Box */
-    .k-popup {
-      position: relative;
-      bottom: 45px;
+    /* Custom Popup Box */
+    .k-popup, .popup-box {
       border-radius: 12px;
       background: #fff;
       padding: 12px 14px;
@@ -292,6 +291,10 @@
       min-width: 230px;
       max-width: 280px;
       font-family: 'Pretendard', sans-serif;
+    }
+    .k-popup {
+      position: relative;
+      bottom: 45px;
     }
     .k-popup::after {
       content: '';
@@ -305,18 +308,18 @@
       display: block;
       width: 0;
     }
-    .k-popup-title {
+    .k-popup-title, .popup-title {
       font-size: 15px;
       font-weight: 800;
       color: #002b49;
       margin-bottom: 2px;
     }
-    .k-popup-sub {
+    .k-popup-sub, .popup-sub {
       font-size: 11.5px;
       color: #8b95a1;
       margin-bottom: 8px;
     }
-    .k-popup-menu {
+    .k-popup-menu, .popup-menu {
       font-size: 12px;
       color: #4e5968;
       background: #f8fafc;
@@ -325,7 +328,7 @@
       margin-bottom: 8px;
       line-height: 1.4;
     }
-    .k-popup-btn {
+    .k-popup-btn, .popup-btn {
       width: 100%;
       background: #fee500;
       color: #191600;
@@ -337,6 +340,7 @@
       cursor: pointer;
       text-align: center;
       display: block;
+      text-decoration: none;
     }
 
     /* Detail Modal */
@@ -432,8 +436,10 @@
     .btn-naver { background-color: #03c75a; color: #ffffff; }
     .btn-google { background-color: #1a73e8; color: #ffffff; }
   </style>
-  <!-- Pure Kakao Maps SDK with your Registered Key -->
-  <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=5b64fcf65bb1ceaf33f89229033087d2&autoload=false"></script>
+  <!-- 1. Kakao Map SDK -->
+  <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=5b64fcf65bb1ceaf33f89229033087d2"></script>
+  <!-- 2. Fallback Leaflet Script -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 
@@ -441,7 +447,7 @@
     <aside class="sidebar">
       <div class="header">
         <div class="badge">🍽️ 2026 현대건설 사내 캠페인</div>
-        <h1>현건슐랭 맛지도 (카카오맵)</h1>
+        <h1>현건슐랭 맛지도</h1>
         <p>임직원 150명이 직접 검증한 전국 맛집 아카이브</p>
       </div>
 
@@ -471,7 +477,7 @@
 
       <div class="status-bar">
         <div>식당 <strong id="resCount">150</strong>곳</div>
-        <div>* 카드를 누르면 카카오맵 위치로 이동합니다</div>
+        <div>* 카드를 누르면 지도 위치로 이동합니다</div>
       </div>
 
       <div class="card-list" id="cardList"></div>
@@ -529,41 +535,87 @@
     let searchLoc = "";
     let selectedId = null;
 
-    let map = null;
-    let overlays = [];
-    let activePopupOverlay = null;
+    let mapType = null; // 'kakao' or 'leaflet'
+    let kakaoMap = null;
+    let leafletMap = null;
+    let kakaoOverlays = [];
+    let leafletMarkers = new Map();
+    let kakaoActivePopup = null;
 
     const regionCenters = {
-      "전체": { lat: 36.2, lng: 127.8, level: 12 },
-      "서울": { lat: 37.5665, lng: 126.9780, level: 8 },
-      "경기·인천": { lat: 37.4138, lng: 127.0500, level: 9 },
-      "충청·대전": { lat: 36.5184, lng: 127.1666, level: 10 },
-      "강원": { lat: 37.7500, lng: 128.5000, level: 10 },
-      "영남": { lat: 35.5384, lng: 128.8000, level: 11 },
-      "호남": { lat: 35.2000, lng: 127.0000, level: 11 },
-      "제주": { lat: 33.3800, lng: 126.5500, level: 9 }
+      "전체": { lat: 36.2, lng: 127.8, kakaoLevel: 12, leafletZoom: 7 },
+      "서울": { lat: 37.5665, lng: 126.9780, kakaoLevel: 8, leafletZoom: 11 },
+      "경기·인천": { lat: 37.4138, lng: 127.0500, kakaoLevel: 9, leafletZoom: 10 },
+      "충청·대전": { lat: 36.5184, lng: 127.1666, kakaoLevel: 10, leafletZoom: 9 },
+      "강원": { lat: 37.7500, lng: 128.5000, kakaoLevel: 10, leafletZoom: 9 },
+      "영남": { lat: 35.5384, lng: 128.8000, kakaoLevel: 11, leafletZoom: 8 },
+      "호남": { lat: 35.2000, lng: 127.0000, kakaoLevel: 11, leafletZoom: 8 },
+      "제주": { lat: 33.3800, lng: 126.5500, kakaoLevel: 9, leafletZoom: 10 }
     };
 
-    function initKakaoMap() {
-      // 1. 좌측 150곳 리스트는 지도 로드 전에도 즉시 렌더링
+    function initMapSystem() {
+      // 1. 좌측 150곳 리스트 우선 즉시 렌더링
       renderCardsOnly();
 
-      // 2. 카카오 지도 SDK 초기화
-      if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.load) {
-        kakao.maps.load(function() {
-          const container = document.getElementById('map');
-          const options = {
-            center: new kakao.maps.LatLng(36.2, 127.8),
-            level: 12
+      // 2. 카카오 지도 초기화 시도
+      let kakaoSuccess = false;
+      try {
+        if (typeof kakao !== 'undefined' && kakao.maps) {
+          const runKakao = () => {
+            try {
+              const container = document.getElementById('map');
+              const options = {
+                center: new kakao.maps.LatLng(36.2, 127.8),
+                level: 12
+              };
+              kakaoMap = new kakao.maps.Map(container, options);
+              const zoomControl = new kakao.maps.ZoomControl();
+              kakaoMap.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
+              mapType = 'kakao';
+              kakaoSuccess = true;
+              renderAll();
+            } catch (err) {
+              console.warn("Kakao constructor failed, fallback:", err);
+              initLeafletFallback();
+            }
           };
-          map = new kakao.maps.Map(container, options);
 
-          const zoomControl = new kakao.maps.ZoomControl();
-          map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
-
-          renderAll();
-        });
+          if (kakao.maps.load) {
+            kakao.maps.load(runKakao);
+          } else {
+            runKakao();
+          }
+        }
+      } catch (e) {
+        console.warn("Kakao SDK not available:", e);
       }
+
+      // 3. 만약 0.8초 내에 카카오 지도가 뜨지 않으면(차단/도메인 대기 등) 안전하게 Leaflet으로 즉각 실행
+      setTimeout(() => {
+        if (!kakaoSuccess && !mapType) {
+          initLeafletFallback();
+        }
+      }, 800);
+    }
+
+    function initLeafletFallback() {
+      if (mapType === 'leaflet' || mapType === 'kakao') return;
+      mapType = 'leaflet';
+      const mapEl = document.getElementById('map');
+      mapEl.innerHTML = '';
+
+      leafletMap = L.map('map', {
+        center: [36.2, 127.8],
+        zoom: 7,
+        zoomControl: true
+      });
+
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(leafletMap);
+
+      renderAll();
     }
 
     function getFilteredData() {
@@ -608,51 +660,72 @@
     function renderAll() {
       renderCardsOnly();
 
-      // Clear existing Kakao overlays
-      overlays.forEach(o => o.setMap(null));
-      overlays = [];
-      if (activePopupOverlay) {
-        activePopupOverlay.setMap(null);
-        activePopupOverlay = null;
-      }
-
-      if (!map || typeof kakao === 'undefined' || !kakao.maps) return;
-
       const filtered = getFilteredData();
 
-      filtered.forEach((item, idx) => {
-        const pos = new kakao.maps.LatLng(item.lat, item.lng);
+      if (mapType === 'kakao' && kakaoMap) {
+        kakaoOverlays.forEach(o => o.setMap(null));
+        kakaoOverlays = [];
+        if (kakaoActivePopup) { kakaoActivePopup.setMap(null); kakaoActivePopup = null; }
 
-        const pinDiv = document.createElement('div');
-        pinDiv.className = 'k-pin' + (item.id === selectedId ? ' active' : '');
-        pinDiv.id = `k-pin-${item.id}`;
-        pinDiv.innerText = idx + 1;
+        filtered.forEach((item, idx) => {
+          const pos = new kakao.maps.LatLng(item.lat, item.lng);
+          const pinDiv = document.createElement('div');
+          pinDiv.className = 'k-pin' + (item.id === selectedId ? ' active' : '');
+          pinDiv.id = `pin-${item.id}`;
+          pinDiv.innerText = idx + 1;
+          pinDiv.onclick = () => { selectItem(item, false); showKakaoPopup(item); };
 
-        pinDiv.onclick = () => {
-          selectItem(item, false);
-          showPopup(item);
-        };
-
-        const customOverlay = new kakao.maps.CustomOverlay({
-          position: pos,
-          content: pinDiv,
-          yAnchor: 0.5
+          const customOverlay = new kakao.maps.CustomOverlay({
+            position: pos,
+            content: pinDiv,
+            yAnchor: 0.5
+          });
+          customOverlay.setMap(kakaoMap);
+          kakaoOverlays.push(customOverlay);
         });
 
-        customOverlay.setMap(map);
-        overlays.push(customOverlay);
-      });
+        if (regionCenters[selectedRegion]) {
+          const rc = regionCenters[selectedRegion];
+          kakaoMap.setLevel(rc.kakaoLevel);
+          kakaoMap.panTo(new kakao.maps.LatLng(rc.lat, rc.lng));
+        }
+      } else if (mapType === 'leaflet' && leafletMap) {
+        leafletMarkers.forEach(m => leafletMap.removeLayer(m));
+        leafletMarkers.clear();
 
-      if (regionCenters[selectedRegion]) {
-        const rc = regionCenters[selectedRegion];
-        map.setLevel(rc.level);
-        map.panTo(new kakao.maps.LatLng(rc.lat, rc.lng));
+        filtered.forEach((item, idx) => {
+          const icon = L.divIcon({
+            className: 'pin-icon-wrap',
+            html: `<div class="leaflet-div-pin ${item.id === selectedId ? 'active' : ''}" id="pin-${item.id}">${idx + 1}</div>`,
+            iconSize: [32, 32],
+            iconAnchor: [16, 16]
+          });
+
+          const marker = L.marker([item.lat, item.lng], { icon: icon });
+          marker.bindPopup(`
+            <div class="popup-box">
+              <div class="popup-title">${item.name}</div>
+              <div class="popup-sub">${item.region} · ${item.sigungu} (추천: ${item.recommender})</div>
+              <div class="popup-menu"><strong>메뉴:</strong> ${item.menu}</div>
+              <button class="popup-btn" onclick="openModalById(${item.id})">상세정보 & 길찾기</button>
+            </div>
+          `, { offset: [0, -10] });
+
+          marker.on('click', () => selectItem(item, false));
+          marker.addTo(leafletMap);
+          leafletMarkers.set(item.id, marker);
+        });
+
+        if (regionCenters[selectedRegion]) {
+          const rc = regionCenters[selectedRegion];
+          leafletMap.setView([rc.lat, rc.lng], rc.leafletZoom);
+        }
       }
     }
 
-    function showPopup(item) {
-      if (!map) return;
-      if (activePopupOverlay) activePopupOverlay.setMap(null);
+    function showKakaoPopup(item) {
+      if (!kakaoMap) return;
+      if (kakaoActivePopup) kakaoActivePopup.setMap(null);
 
       const popupDiv = document.createElement('div');
       popupDiv.className = 'k-popup';
@@ -663,13 +736,13 @@
         <button class="k-popup-btn" onclick="openModalById(${item.id})">상세정보 & 길찾기</button>
       `;
 
-      activePopupOverlay = new kakao.maps.CustomOverlay({
+      kakaoActivePopup = new kakao.maps.CustomOverlay({
         position: new kakao.maps.LatLng(item.lat, item.lng),
         content: popupDiv,
         yAnchor: 1.2
       });
 
-      activePopupOverlay.setMap(map);
+      kakaoActivePopup.setMap(kakaoMap);
     }
 
     function selectItem(item, openPopup) {
@@ -682,13 +755,19 @@
         targetCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }
 
-      document.querySelectorAll(".k-pin").forEach(p => p.classList.remove("active"));
-      const targetPin = document.getElementById(`k-pin-${item.id}`);
+      document.querySelectorAll(".k-pin, .leaflet-div-pin").forEach(p => p.classList.remove("active"));
+      const targetPin = document.getElementById(`pin-${item.id}`);
       if (targetPin) targetPin.classList.add("active");
 
-      if (map) {
-        map.panTo(new kakao.maps.LatLng(item.lat, item.lng));
-        if (openPopup) showPopup(item);
+      if (mapType === 'kakao' && kakaoMap) {
+        kakaoMap.panTo(new kakao.maps.LatLng(item.lat, item.lng));
+        if (openPopup) showKakaoPopup(item);
+      } else if (mapType === 'leaflet' && leafletMap) {
+        leafletMap.flyTo([item.lat, item.lng], 14, { duration: 0.5 });
+        const m = leafletMarkers.get(item.id);
+        if (m && openPopup) {
+          setTimeout(() => m.openPopup(), 300);
+        }
       }
     }
 
@@ -716,9 +795,9 @@
 
     function closeModal() {
       document.getElementById("modalBackdrop").classList.remove("open");
-      if (activePopupOverlay) {
-        activePopupOverlay.setMap(null);
-        activePopupOverlay = null;
+      if (kakaoActivePopup) {
+        kakaoActivePopup.setMap(null);
+        kakaoActivePopup = null;
       }
     }
 
@@ -747,7 +826,7 @@
     });
 
     window.onload = () => {
-      initKakaoMap();
+      initMapSystem();
     };
   </script>
 </body>

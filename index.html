@@ -289,7 +289,7 @@ function initMap(){
   geocodeAll();
 }
 function loadKakao(){
-  if (!KAKAO_KEY || KAKAO_KEY.startsWith("5b64fcf65bb1ceaf33f89229033087d2")){
+  if (!KAKAO_KEY || KAKAO_KEY.startsWith("여기에")){
     $("note").hidden = false; $("note").className = "note err";
     $("note").textContent = "지도를 보려면 코드 상단 KAKAO_KEY에 카카오 JavaScript 키를 넣어주세요.";
     return;

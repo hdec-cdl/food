@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>현대식(食) 맛지도 | 현대건설 임직원이 직접 검증한 전국 맛집</title>
+<title>현건슐랭 맛지도 | 현대건설 임직원이 직접 검증한 전국 맛집</title>
 <meta name="description" content="현대건설 임직원이 직접 검증한 전국 맛집 150곳을 지도에서 찾아보세요.">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
@@ -82,6 +82,42 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:var(--panel) 1fr}
 .empty{margin:40px 10px;text-align:center;color:var(--sub);font-size:14px;line-height:1.7}
 .empty button{margin-top:8px;border:1px solid var(--green);background:#fff;color:var(--green);font-weight:700;border-radius:6px;padding:8px 14px}
 
+/* header button + suggest dialog */
+header{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.suggest-btn{flex:none;background:var(--sun);color:#1a1400;border:0;border-radius:8px;padding:10px 16px;font-weight:800;font-size:14px;letter-spacing:-.02em;box-shadow:0 1px 0 rgba(0,0,0,.2);transition:transform .1s,background .15s}
+.suggest-btn:hover{background:#ffd23f}
+.suggest-btn:active{transform:translateY(1px)}
+.suggest-btn .short{display:none}
+.dlg{border:0;border-radius:12px;padding:0;width:min(560px,94vw);max-height:92dvh;color:var(--ink);box-shadow:0 12px 40px rgba(0,0,0,.35)}
+.dlg::backdrop{background:rgba(10,25,18,.55)}
+.dlg-body{padding:22px 24px 24px}
+.dlg h2{margin:0 0 4px;font-size:20px;font-weight:800;letter-spacing:-.03em}
+.dlg .lead{margin:0 0 18px;font-size:13.5px;color:var(--sub)}
+.dlg-x{position:absolute;right:10px;top:10px;border:0;background:none;font-size:18px;color:var(--mute);padding:8px 10px;border-radius:6px}
+.dlg-x:hover{color:var(--ink);background:var(--paper)}
+.fld{margin:0 0 14px}
+.fld>label,.fld>.lbl{display:block;font-size:13px;font-weight:700;margin:0 0 5px}
+.fld .req{color:#c0392b;margin-left:2px}
+.fld .hint{font-weight:500;color:var(--mute);font-size:12px;margin-left:6px}
+.fld input[type=text],.fld textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font:inherit;font-size:14px;background:#f8faf9;color:var(--ink)}
+.fld textarea{min-height:68px;resize:vertical;line-height:1.5}
+.fld input[type=text]:focus,.fld textarea:focus{outline:none;border-color:var(--green);background:#fff;box-shadow:0 0 0 3px var(--green-t)}
+.opts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.opt{position:relative}
+.opt input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.opt span{display:inline-block;border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--sub)}
+.opt input:checked+span{background:var(--green);border-color:var(--green);color:#fff}
+.opt input:focus-visible+span{outline:3px solid var(--sun);outline-offset:2px}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.sg-msg{margin:0 0 12px;font-size:13px;font-weight:600;color:#a93226}
+.sg-msg:empty{display:none}
+.cta{width:100%;border:0;border-radius:8px;background:var(--green);color:#fff;font-weight:800;font-size:16px;padding:13px;letter-spacing:-.02em}
+.cta:hover{background:var(--green-d)}
+.cta:disabled{opacity:.6;cursor:wait}
+.sg-done{text-align:center;padding:28px 8px 6px}
+.sg-done b{display:block;font-size:19px;margin-bottom:8px}
+.sg-done p{margin:0 0 20px;color:var(--sub);font-size:14px;line-height:1.6}
+
 /* map */
 .mapwrap{position:relative;min-height:0}
 #map{position:absolute;inset:0;background:#e6ebe8}
@@ -102,6 +138,10 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:var(--panel) 1fr}
 @media (max-width:820px){
   header{padding:11px 16px 12px}
   header h1{font-size:21px}
+  .suggest-btn{padding:9px 12px;font-size:13px}
+  .suggest-btn .long{display:none}
+  .suggest-btn .short{display:inline}
+  .dlg-body{padding:20px 18px 20px}
   header p{font-size:12.5px}
   main{grid-template-columns:1fr;grid-template-rows:38% 1fr}
   .mapwrap{order:-1}
@@ -116,8 +156,11 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:var(--panel) 1fr}
 </head>
 <body>
 <header>
-  <h1>현대식(食) 맛지도</h1>
-  <p>현대건설 임직원이 직접 검증한 전국 맛집</p>
+  <div class="brand">
+    <h1>현건슐랭 맛지도</h1>
+    <p>현대건설 임직원이 직접 검증한 전국 맛집</p>
+  </div>
+  <button type="button" id="suggest-open" class="suggest-btn"><span class="long">나만의 맛집 추천하기</span><span class="short">맛집 추천</span></button>
 </header>
 <main>
   <section class="panel" aria-label="맛집 목록">
@@ -142,6 +185,41 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:var(--panel) 1fr}
   </section>
 </main>
 
+<dialog id="suggest-dlg" class="dlg" aria-labelledby="sg-title">
+  <div class="dlg-body">
+    <button type="button" class="dlg-x" id="sg-close" aria-label="닫기">✕</button>
+    <div id="sg-form-wrap">
+      <h2 id="sg-title">나만의 맛집 추천하기</h2>
+      <p class="lead">동료들에게 알려주고 싶은 맛집을 남겨 주세요. 확인 후 지도에 반영합니다.</p>
+      <form id="sg-form" novalidate>
+        <div class="fld"><label for="sg-by">추천인<span class="req">*</span><span class="hint">사이트에는 '김*형'처럼 가려서 표시돼요</span></label>
+          <input type="text" id="sg-by" maxlength="40" required autocomplete="name"></div>
+        <div class="fld"><label for="sg-name">식당 이름<span class="req">*</span></label>
+          <input type="text" id="sg-name" maxlength="80" required></div>
+        <div class="fld"><label for="sg-addr">식당 위치<span class="req">*</span><span class="hint">주소 또는 동네까지 알려 주세요</span></label>
+          <input type="text" id="sg-addr" maxlength="200" required placeholder="예: 서울 종로구 북촌로5길 78"></div>
+        <div class="fld"><label for="sg-menu">대표/추천 메뉴<span class="req">*</span></label>
+          <input type="text" id="sg-menu" maxlength="500" required></div>
+        <div class="fld"><label for="sg-story">식당과의 인연</label>
+          <textarea id="sg-story" maxlength="1000"></textarea></div>
+        <div class="fld"><label for="sg-tip">방문 팁</label>
+          <textarea id="sg-tip" maxlength="1000" placeholder="웨이팅, 주차, 브레이크 타임 등"></textarea></div>
+        <div class="fld"><span class="lbl">추천 순간<span class="hint">여러 개 선택할 수 있어요</span></span>
+          <div class="opts" id="sg-cats"></div>
+          <input type="text" id="sg-etc" maxlength="200" placeholder="기타 (직접 작성)" aria-label="추천 순간 기타"></div>
+        <div class="hp" aria-hidden="true"><label>website<input type="text" id="sg-hp" tabindex="-1" autocomplete="off"></label></div>
+        <p class="sg-msg" id="sg-msg" role="alert"></p>
+        <button type="submit" class="cta" id="sg-submit">추천하기</button>
+      </form>
+    </div>
+    <div id="sg-done" class="sg-done" hidden>
+      <b>추천이 접수되었어요 🙌</b>
+      <p>소중한 맛집 정보 감사합니다.<br>확인 후 지도에 반영할게요.</p>
+      <button type="button" class="cta" id="sg-done-close">닫기</button>
+    </div>
+  </div>
+</dialog>
+
 <script>
 /* ▼ 카카오 개발자 콘솔에서 발급받은 JavaScript 키를 넣어주세요 (플랫폼에 사이트 도메인 등록 필요) */
 const KAKAO_KEY = "5b64fcf65bb1ceaf33f89229033087d2";
@@ -151,6 +229,7 @@ const API_URL = "https://food-api.hdec-nicetaste.workers.dev/api/restaurants";
 
 let DATA = [];      // Cloudflare D1에서 불러옵니다
 const REGIONS = ["서울","경기·인천","충청·대전","강원","영남","호남","제주"];
+const SUGGEST_URL = API_URL.replace(/\/api\/restaurants$/, "/api/suggest");
 const CATS = ["가족 맛집","회식 추천","손님 코스","혼밥 명당","파워 점심","해장 종결지"];
 const CACHE_KEY = "hdec-food-geo-v4";
 const DATA_CACHE = "hdec-food-data-v1";  // 마지막으로 불러온 맛집 목록(네트워크 오류 대비)
@@ -414,6 +493,41 @@ async function boot(){
   renderFilters(); renderList();
   if (map) syncMap(true); else loadKakao();
 }
+/* ---------- 맛집 추천하기 ---------- */
+const dlg = $("suggest-dlg"), sgForm = $("sg-form");
+$("sg-cats").innerHTML = CATS.map(c => `<label class="opt"><input type="checkbox" name="cat" value="${c}"><span>${c}</span></label>`).join("");
+function openSuggest(){
+  $("sg-form-wrap").hidden = false; $("sg-done").hidden = true; $("sg-msg").textContent = "";
+  dlg.showModal(); $("sg-by").focus();
+}
+$("suggest-open").addEventListener("click", openSuggest);
+$("sg-close").addEventListener("click", () => dlg.close());
+$("sg-done-close").addEventListener("click", () => dlg.close());
+dlg.addEventListener("click", e => { if (e.target === dlg) dlg.close(); });  // 바깥을 누르면 닫기
+sgForm.addEventListener("submit", async e => {
+  e.preventDefault();
+  const msg = $("sg-msg"), btn = $("sg-submit");
+  msg.textContent = "";
+  if (!sgForm.reportValidity()) return;
+  const v = id => $(id).value.trim();
+  const payload = {
+    recommender: v("sg-by"), name: v("sg-name"), address: v("sg-addr"), menu: v("sg-menu"),
+    story: v("sg-story"), tip: v("sg-tip"), etc: v("sg-etc"), website: v("sg-hp"),
+    cats: [...sgForm.querySelectorAll('input[name=cat]:checked')].map(x => x.value),
+  };
+  btn.disabled = true; btn.textContent = "보내는 중…";
+  try {
+    const r = await fetch(SUGGEST_URL, { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(payload) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.ok) throw new Error(j.error || ("HTTP " + r.status));
+    sgForm.reset();
+    $("sg-form-wrap").hidden = true; $("sg-done").hidden = false;
+  } catch(err){
+    console.warn("추천 전송 실패:", err);
+    msg.textContent = "전송하지 못했어요. 잠시 후 다시 시도해 주세요. (" + (err.message || err) + ")";
+  } finally { btn.disabled = false; btn.textContent = "추천하기"; }
+});
+
 boot();
 </script>
 </body>

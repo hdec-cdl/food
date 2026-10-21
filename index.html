@@ -64,6 +64,8 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:var(--panel) 1fr}
 .nm{font-size:16px;font-weight:800;letter-spacing:-.025em}
 .loc{font-size:12px;color:var(--mute);font-weight:600;white-space:nowrap}
 .sig{margin:3px 0 0;font-size:13px;color:var(--sub);display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.sig-lbl{display:none}
+.card.open .sig-lbl{display:block;margin:8px 0 2px;font-size:12px;font-weight:700;color:var(--green)}
 .card.open .sig{-webkit-line-clamp:unset;display:block}
 .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
 .tag{font-size:11.5px;font-weight:700;color:var(--green-d);background:var(--green-t);border-radius:4px;padding:2px 7px}
@@ -117,6 +119,9 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px}
 .sg-done{text-align:center;padding:28px 8px 6px}
 .sg-done b{display:block;font-size:19px;margin-bottom:8px}
 .sg-done p{margin:0 0 20px;color:var(--sub);font-size:14px;line-height:1.6}
+
+.stale{margin:0;padding:8px 18px;background:#fff7e0;color:#5b4500;font-size:12.5px;font-weight:600;line-height:1.5;border-bottom:1px solid var(--sun);word-break:break-all}
+.stale[hidden]{display:none}
 
 /* map */
 .mapwrap{position:relative;min-height:0}
@@ -176,6 +181,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px}
         <button type="button" id="search-clear" class="search-clear" aria-label="검색어 지우기">✕</button>
       </div>
     </div>
+    <p class="stale" id="stale" hidden></p>
     <div class="meta"><span id="count"></span><button id="reset" type="button" hidden>필터 해제</button></div>
     <div class="list" id="list"></div>
   </section>
@@ -299,6 +305,7 @@ function cardHTML(d){
   return `<article class="card${open?" open":""}" data-id="${d.id}">
     <button class="head" type="button" aria-expanded="${open}" aria-controls="m${d.id}">
       <div class="row1"><span class="nm">${esc(d.n)}</span><span class="loc">${esc(locLabel(d))}</span></div>
+      <span class="sig-lbl">대표/추천 메뉴</span>
       <p class="sig">${esc(d.m)}</p>
       ${d.c.length ? `<div class="tags">${d.c.map(c=>`<span class="tag">${c}</span>`).join("")}</div>` : ""}
     </button>
@@ -480,10 +487,15 @@ async function boot(){
     try { rows = JSON.parse(txt); } catch(_) { throw new Error("데이터가 아닌 응답을 받았어요: " + txt.slice(0, 60).replace(/\s+/g, " ")); }
     if (!Array.isArray(rows)) throw new Error("예상과 다른 응답: " + txt.slice(0, 160));
     setData(rows);
+    $("stale").hidden = true;
     try { localStorage.setItem(DATA_CACHE, JSON.stringify(rows)); } catch(e){}
   } catch(e){
     console.warn("맛집 데이터를 불러오지 못했습니다:", e);
-    try { const c = JSON.parse(localStorage.getItem(DATA_CACHE) || "null"); if (Array.isArray(c) && c.length) setData(c); } catch(_){}
+    try { const c = JSON.parse(localStorage.getItem(DATA_CACHE) || "null"); if (Array.isArray(c) && c.length){
+      setData(c);
+      $("stale").hidden = false;
+      $("stale").textContent = "최신 맛집 정보를 불러오지 못해 이전에 저장된 목록을 보여드리고 있어요. (" + String((e && e.message) || e).slice(0, 120) + ")";
+    } } catch(_){}
     if (!DATA.length){
       loadError = true;
       loadErrorMsg = String((e && e.message) || e);

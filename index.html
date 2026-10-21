@@ -147,7 +147,7 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:var(--panel) 1fr}
 const KAKAO_KEY = "5b64fcf65bb1ceaf33f89229033087d2";
 
 /* ▼ Cloudflare Worker 주소 (배포 후 받은 주소 + /api/restaurants). 비워두면 아래 내장 데이터를 사용합니다 */
-const API_URL = "https://food.hdec-nicetaste.workers.dev/api/restaurants";
+const API_URL = "https://food-api.hdec-nicetaste.workers.dev/api/restaurants";
 
 let DATA = [];      // Cloudflare D1에서 불러옵니다
 const REGIONS = ["서울","경기·인천","충청·대전","강원","영남","호남","제주"];
@@ -159,7 +159,7 @@ const gk = d => d.n + "|" + d.a;  // 좌표 저장 키(엑셀 순서가 바뀌�
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const state = { region:null, cat:null, open:null, query:"" };
-let loadError = false;
+let loadError = false, loadErrorMsg = "";
 let map = null, geo = {}, byId = {};
 DATA.forEach(d => byId[d.id] = d);
 try { geo = JSON.parse(localStorage.getItem(CACHE_KEY) || "{}"); } catch(e){ geo = {}; }
@@ -239,7 +239,7 @@ function renderList(){
   $("reset").hidden = !(state.region || state.cat || state.query);
   $("list").innerHTML = items.length ? items.map(cardHTML).join("") :
     (loadError
-      ? `<div class="empty">맛집 데이터를 불러오지 못했어요.<br>잠시 후 다시 시도해 주세요.<br><button type="button" id="retry">다시 시도</button></div>`
+      ? `<div class="empty">맛집 데이터를 불러오지 못했어요.<br>잠시 후 다시 시도해 주세요.<br><button type="button" id="retry">다시 시도</button><br><small style="display:block;margin-top:14px;color:#8b948f;word-break:break-all">원인: ${esc(loadErrorMsg)}<br>${esc(API_URL)}</small></div>`
       : `<div class="empty">조건에 맞는 맛집이 없어요.<br>검색어나 필터를 바꿔 보세요.<br><button type="button" id="empty-reset">전체 초기화</button></div>`);
 }
 
@@ -395,15 +395,21 @@ async function boot(){
   try {
     // 수정 내용이 바로 보이도록 매번 새로 요청합니다
     const r = await fetch(API_URL + (API_URL.includes("?") ? "&" : "?") + "t=" + Date.now(), { cache:"no-store" });
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    const rows = await r.json();
-    if (!Array.isArray(rows)) throw new Error("bad response");
+    const txt = await r.text();
+    if (!r.ok) throw new Error("HTTP " + r.status + " " + txt.slice(0, 160));
+    let rows;
+    try { rows = JSON.parse(txt); } catch(_) { throw new Error("데이터가 아닌 응답을 받았어요: " + txt.slice(0, 60).replace(/\s+/g, " ")); }
+    if (!Array.isArray(rows)) throw new Error("예상과 다른 응답: " + txt.slice(0, 160));
     setData(rows);
     try { localStorage.setItem(DATA_CACHE, JSON.stringify(rows)); } catch(e){}
   } catch(e){
     console.warn("맛집 데이터를 불러오지 못했습니다:", e);
     try { const c = JSON.parse(localStorage.getItem(DATA_CACHE) || "null"); if (Array.isArray(c) && c.length) setData(c); } catch(_){}
-    if (!DATA.length) loadError = true;
+    if (!DATA.length){
+      loadError = true;
+      loadErrorMsg = String((e && e.message) || e);
+      if (/Failed to fetch|NetworkError|Load failed/i.test(loadErrorMsg)) loadErrorMsg += " (API 주소가 틀렸거나 접속 허용 설정 문제일 수 있어요)";
+    }
   }
   renderFilters(); renderList();
   if (map) syncMap(true); else loadKakao();

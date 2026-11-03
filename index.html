@@ -64,6 +64,13 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:var(--panel) 1fr}
 .nm{font-size:16px;font-weight:800;letter-spacing:-.025em}
 .loc{font-size:12px;color:var(--mute);font-weight:600;white-space:nowrap}
 .sig{margin:3px 0 0;font-size:13px;color:var(--sub);display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.nmw{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 7px;min-width:0}
+.badge{display:inline-block;font-size:11.5px;font-weight:800;color:#1a1400;background:var(--sun);border-radius:999px;padding:2px 9px;white-space:nowrap;letter-spacing:-.01em}
+.card.open.multi .sig,.card.open.multi .sig-lbl{display:none}
+.rec{margin:12px 0 0;padding:10px 13px 13px;background:#f8faf9;border:1px solid var(--line);border-radius:8px}
+.rec-h{margin:0;font-size:12.5px;font-weight:600;color:var(--mute)}
+.rec .tags{margin-top:6px}
+.detail .rec dl{margin:2px 0 0}
 .sig-lbl{display:none}
 .card.open .sig-lbl{display:block;margin:8px 0 2px;font-size:12px;font-weight:700;color:var(--green)}
 .card.open .sig{-webkit-line-clamp:unset;display:block}
@@ -256,7 +263,7 @@ const okCat = d => !state.cat || d.c.includes(state.cat);
 const okQuery = d => {
   const toks = state.query.toLowerCase().split(/\s+/).filter(Boolean);
   if (!toks.length) return true;
-  const hay = [d.n, d.m, d.a, d.r, d.b, d.t, d.x, d.c.join(" ")].join(" ").toLowerCase();
+  const hay = [d.n, d.a, d.r, d._hay].join(" ").toLowerCase();
   return toks.every(k => hay.includes(k));
 };
 function visibleItems(){ return DATA.filter(d => okRegion(d) && okCat(d) && okQuery(d)); }
@@ -302,21 +309,27 @@ function cardHTML(d){
   const kakao = g ? `https://map.kakao.com/link/to/${q},${g.lat},${g.lng}` : `https://map.kakao.com/?q=${encodeURIComponent(d.a)}`;
   const naver = `https://map.naver.com/p/search/${encodeURIComponent(d.a + " " + d.n)}`;
   const row = (k,v) => v ? `<dt>${k}</dt><dd>${esc(v)}</dd>` : "";
-  return `<article class="card${open?" open":""}" data-id="${d.id}">
+  const multi = d.e.length > 1;
+  const tagsOf = cs => cs.length ? `<div class="tags">${cs.map(c=>`<span class="tag">${c}</span>`).join("")}</div>` : "";
+  // 여러 명이 추천한 식당: 추천인별로 코멘트를 각각 나열
+  const rec = (e, i) => `<section class="rec">
+        <p class="rec-h">추천 ${i+1}${e.p ? " · " + esc(maskName(e.p)) : ""}</p>
+        ${tagsOf(e.c)}
+        <dl>${row("대표/추천 메뉴", e.m)}${row("식당과의 인연", e.b)}${row("방문 팁", e.t)}${row("이럴 때 추천", e.x)}</dl>
+      </section>`;
+  const body = multi
+    ? `${d.e.map(rec).join("")}<dl>${row("주소", d.a)}</dl>`
+    : `<dl>${row("식당과의 인연", d.b)}${row("방문 팁", d.t)}${row("이럴 때 추천", d.x)}${row("주소", d.a)}</dl>`;
+  return `<article class="card${open?" open":""}${multi?" multi":""}" data-id="${d.id}">
     <button class="head" type="button" aria-expanded="${open}" aria-controls="m${d.id}">
-      <div class="row1"><span class="nm">${esc(d.n)}</span><span class="loc">${esc(locLabel(d))}</span></div>
+      <div class="row1"><span class="nmw"><span class="nm">${esc(d.n)}</span>${multi ? `<span class="badge">👑 ${d.e.length}회 추천</span>` : ""}</span><span class="loc">${esc(locLabel(d))}</span></div>
       <span class="sig-lbl">대표/추천 메뉴</span>
       <p class="sig">${esc(d.m)}</p>
       ${d.c.length ? `<div class="tags">${d.c.map(c=>`<span class="tag">${c}</span>`).join("")}</div>` : ""}
     </button>
-    <div class="more" id="m${d.id}"><div><div class="detail"><dl>
-      ${row("식당과의 인연", d.b)}
-      ${row("방문 팁", d.t)}
-      ${row("이럴 때 추천", d.x)}
-      ${row("주소", d.a)}
-    </dl>
+    <div class="more" id="m${d.id}"><div><div class="detail">${body}
     <div class="acts"><a class="pri" href="${kakao}" target="_blank" rel="noopener">카카오맵 길찾기</a><a href="${naver}" target="_blank" rel="noopener">네이버지도</a></div>
-    <p class="by">${esc(maskName(d.p))}</p></div></div></div>
+    ${multi ? "" : `<p class="by">${esc(maskName(d.p))}</p>`}</div></div></div>
   </article>`;
 }
 function renderList(){
@@ -470,8 +483,32 @@ $("list").addEventListener("click", e => {
   const h = e.target.closest(".head"); if (h) select(+h.closest(".card").dataset.id);
 });
 
+// 상호명이 같은 행(여러 명의 추천)을 하나의 식당으로 묶습니다
+function groupRows(rows){
+  const groups = new Map();
+  for (const r of rows){
+    const k = String(r.n || "").replace(/\s+/g, " ").trim();
+    let g = groups.get(k);
+    if (!g){ g = { id:r.id, n:k, a:r.a, r:r.r, q:r.q, lat:r.lat, lng:r.lng, c:[], e:[] }; groups.set(k, g); }
+    else {
+      if (!g.r && r.r) g.r = r.r;
+      if (!g.q && r.q) g.q = r.q;
+      if (g.lat == null && r.lat != null){ g.lat = r.lat; g.lng = r.lng; }
+    }
+    const c = r.c || [];
+    g.e.push({ id:r.id, p:r.p || "", m:r.m || "", b:r.b || "", t:r.t || "", x:r.x || "", c });
+    c.forEach(x => { if (!g.c.includes(x)) g.c.push(x); });
+  }
+  return [...groups.values()].map(g => {
+    const f = g.e[0];
+    g.c.sort((a, b) => CATS.indexOf(a) - CATS.indexOf(b));
+    Object.assign(g, { m:f.m, b:f.b, t:f.t, x:f.x, p:f.p });
+    g._hay = g.e.map(e => [e.m, e.b, e.t, e.x, e.c.join(" ")].join(" ")).join(" ").toLowerCase();
+    return g;
+  });
+}
 function setData(rows){
-  DATA = rows; byId = {}; DATA.forEach(d => byId[d.id] = d);
+  DATA = groupRows(rows); byId = {}; DATA.forEach(d => byId[d.id] = d);
   // D1에 lat/lng가 저장돼 있으면 주소 변환 없이 바로 사용
   DATA.forEach(d => { if (d.lat != null && d.lng != null && !geo[gk(d)]) geo[gk(d)] = { lat:+d.lat, lng:+d.lng }; });
 }
